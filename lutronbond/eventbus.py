@@ -1,4 +1,5 @@
 from collections import defaultdict
+import functools
 
 
 class EventBus:
@@ -14,3 +15,8 @@ class EventBus:
 
     def sub(self, key, action: callable):
         self._bus[key].append(action)
+
+
+@functools.cache
+def get_bus(name='default'):
+    return EventBus()

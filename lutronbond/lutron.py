@@ -1,5 +1,9 @@
 import asyncio
+import enum
+import functools
 import logging
+
+from . import config
 
 LOGIN_PROMPT = b'login: '
 PASSWORD_PROMPT = b'password: '
@@ -11,39 +15,84 @@ LINE_TERM = b'\r\n'
 logger = logging.getLogger(__name__)
 
 
+class Operation(enum.Enum):
+    DEVICE = 'DEVICE'
+    OUTPUT = 'OUTPUT'
+    UNKNOWN = '?'
+
+
+class Component(enum.Enum):
+    BTN_1 = 2
+    BTN_2 = 3
+    BTN_3 = 4
+    BTN_RAISE = 5
+    BTN_LOWER = 6
+    UNKNOWN = -1
+
+
+class Action(enum.Enum):
+    ENABLE = 1
+    DISABLE = 2
+    PRESS = 3
+    RELEASE = 4
+    HOLD = 5
+    DBLTAP = 6
+    SCENE = 7
+    LED = 9
+    LEVEL = 14
+    UNKNOWN = -1
+
+
 class LutronEvent:
 
-    def __init__(self, category, device, command, value):
-        self.category = category
+    def __init__(self, operation, device, component, action):
+        self.operation = operation
         self.device = device
-        self.command = command
-        self.value = value
+        self.component = component
+        self.action = action
 
     @classmethod
     def parse(cls, raw):
+        logger.debug('Parsing: %s', raw)
+
         # ~OUTPUT,16,1,0.00
         if not raw.startswith(b'~'):
-            raise ValueError('Unrecognized command: {}'.format(raw))
+            raise ValueError('Unrecognized event: {}'.format(raw))
 
         # Consume leading ~
         raw = raw.strip()[1:]
         parts = raw.split(b',')
         try:
-            category = parts[0]
+            operation = parts[0].decode()
             device = int(parts[1])
-            command = int(parts[2])
-            value = float(parts[3])
+            component = int(parts[2])
+            action = float(parts[3])
         except IndexError:
-            raise ValueError('Invalid command format: {}'.format(raw))
+            raise ValueError('Invalid event format: {}'.format(raw))
 
-        return cls(category, device, command, value)
+        try:
+            operation_enum = Operation(operation)
+        except ValueError:
+            operation_enum = Operation.UNKNOWN
+
+        try:
+            component_enum = Component(component)
+        except ValueError:
+            component_enum = Component.UNKNOWN
+
+        try:
+            action_enum = Action(action)
+        except ValueError:
+            action_enum = Action.UNKNOWN
+
+        return cls(operation_enum, device, component_enum, action_enum)
 
     def __repr__(self):
         return (
             'LutronEvent('
-            'category={}, device={}, command={}, value={}'
+            'operation={}, device={}, component={}, action={}'
             ')'.format(
-                self.category, self.device, self.command, self.value
+                self.operation, self.device, self.component, self.action
             )
         )
 
@@ -132,4 +181,20 @@ class LutronConnection:
                 logger.error('Error parsing event: %s', e)
                 continue
             else:
-                callback(evt)
+                await callback(evt)
+
+
+@functools.cache
+def get_lutron_connection(host):
+    return LutronConnection(host, 23)
+
+
+async def main():
+    l = get_lutron_connection(config.LUTRON_BRIDGE_ADDR)
+    await l.open()
+    await l.stream(lambda e: print(e))
+
+
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
+    asyncio.run(main())
