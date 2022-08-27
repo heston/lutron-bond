@@ -23,6 +23,51 @@ def get_default_bond_connection():
     )
 
 
+def get_handler(config):
+    async def handler(event):
+        actions = config['actions']
+
+        try:
+            component = actions[event.component.name]
+        except KeyError:
+            logger.warning('Unknown component: %s', event.component)
+            return
+
+        try:
+            action = component[event.action.name]
+        except KeyError:
+            logger.warning('Unknown action: %s', event.action)
+            return
+
+        if action is None:
+            return
+
+        arg = None
+        if isinstance(action, dict):
+            action, arg = list(action.items())[0]
+
+        bond_action = bond_async.action.Action(action, argument=arg)
+
+        logger.debug(
+            'Translated event into bond action: %s with argument: %s',
+            bond_action,
+            arg
+        )
+
+        await get_default_bond_connection().action(
+            config['bondID'],
+            bond_action
+        )
+
+        logger.info(
+            '%s request sent to Bond Bridge %s',
+            action,
+            config['bondID']
+        )
+
+    return handler
+
+
 async def main():
     """Example of library usage."""
 
@@ -56,48 +101,6 @@ async def main():
         *[bond.device_state(device_id) for device_id in device_ids]
     )
     pprint.pprint(dict(zip(device_names, state)))
-
-
-def get_handler(config):
-    async def handler(event):
-        actions = config['actions']
-
-        try:
-            component = actions[event.component.name]
-        except KeyError:
-            logger.warn('Unknown component: %s', event.component)
-            return
-
-        try:
-            action = component[event.action.name]
-        except KeyError:
-            logger.warn('Unknown action: %s', event.action)
-            return
-
-        arg = None
-        if isinstance(action, dict):
-            action, arg = list(action.items())[0]
-
-        bond_action = bond_async.action.Action(action, argument=arg)
-
-        logger.debug(
-            'Translated event into bond action: %s with argument: %s',
-            bond_action,
-            arg
-        )
-
-        await get_default_bond_connection().action(
-            config['bondID'],
-            bond_action
-        )
-
-        logger.debug(
-            '%s request sent to bond device %s',
-            action,
-            config['bondID']
-        )
-
-    return handler
 
 
 if __name__ == '__main__':

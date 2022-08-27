@@ -96,6 +96,16 @@ class LutronEvent:
             )
         )
 
+    def __str__(self):
+        return (
+            'LutronEvent({}:{} {}:{})'.format(
+                self.operation.name,
+                self.device,
+                self.component.name,
+                self.action.name
+            )
+        )
+
 
 class LutronConnection:
 
@@ -108,7 +118,7 @@ class LutronConnection:
         self._writer = None
 
     async def connect(self):
-        logger.debug(
+        logger.info(
             'Establishing connection to Lutron bridge at %s:%s',
             self.host,
             self.port
@@ -119,14 +129,17 @@ class LutronConnection:
             self.port
         )
         self.is_connected = True
-        logger.debug('Connected!')
+        logger.info('Connected!')
         return True
 
     async def close(self):
-        logger.debug('Closing connection...')
+        if not self.is_connected:
+            return
+
+        logger.info('Closing connection...')
         self._writer.close()
         await self._writer.wait_closed()
-        logger.debug('Connection closed')
+        logger.info('Connection closed')
         self.is_connected = False
         self.is_logged_in = False
 
@@ -139,10 +152,10 @@ class LutronConnection:
             return True
 
         tries = 5
+        logger.debug('Starting login...')
 
         while not self.is_logged_in and tries:
             tries = tries - 1
-            logger.debug('Starting login. Tries remaining: %s', tries)
             data = await self._reader.read(32)
 
             if data.startswith(LOGIN_PROMPT):
@@ -160,21 +173,25 @@ class LutronConnection:
                 continue
 
             if data.startswith(READY_PROMPT):
-                logger.debug('Login successful!')
+                logger.info('Login successful!')
                 self.is_logged_in = True
 
             return True
+
+        logger.error('Unable to log in')
         return False
 
     async def open(self):
         await self.connect()
-        await self.login()
+        return await self.login()
 
     async def stream(self, callback):
-        while True:
-            logger.debug('Listening for events...')
+        logger.info('Listening for events...')
+
+        while self.is_logged_in and self.is_connected:
             data = await self._reader.readuntil(LINE_TERM)
             logger.debug('Got data: %s', data)
+
             try:
                 evt = LutronEvent.parse(data)
             except ValueError as e:
@@ -187,6 +204,10 @@ class LutronConnection:
 @functools.cache
 def get_lutron_connection(host):
     return LutronConnection(host, 23)
+
+
+def get_default_lutron_connection():
+    return get_lutron_connection(config.LUTRON_BRIDGE_ADDR)
 
 
 async def main():

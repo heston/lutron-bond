@@ -1,6 +1,7 @@
 import asyncio
 import functools
 import logging
+import signal
 
 from . import bond
 from . import config
@@ -10,20 +11,19 @@ from . import lutron
 EVENT_OPERATION = lutron.Operation.DEVICE
 
 logging.basicConfig(
-    level=logging.DEBUG
+    level=logging.INFO
 )
 
 logger = logging.getLogger(__name__)
 
 
 async def handler(lutron_event):
-    logger.debug('Got event: %s', lutron_event)
-
     if lutron_event.operation != EVENT_OPERATION:
-        logger.debug('Skipping operation: %s', lutron_event.operation)
+        logger.debug('Skipping Lutron event: %s', lutron_event)
         return
 
-    logger.debug('Publishing to %s: %s', lutron_event.device, lutron_event)
+    logger.info('Handling Lutron event: %s', lutron_event)
+
     await eventbus.get_bus().pub(
         lutron_event.device,
         lutron_event
@@ -39,16 +39,44 @@ def add_listeners():
         )
 
 
+shutting_down = False
+
+
+async def shutdown():
+    global shutting_down
+    shutting_down = True
+    await lutron.get_default_lutron_connection().close()
+    logger.info('Exiting...')
+
+
+def chaosmonkey():
+    logger.info('!!chaosmonkey strikes again!!')
+    lutron.get_default_lutron_connection()._writer.close()
+
+
 async def main():
+    loop = asyncio.get_running_loop()
+    loop.add_signal_handler(
+        signal.SIGINT,
+        lambda: loop.create_task(shutdown())
+    )
+
+    # loop.call_later(5, chaosmonkey)
+
     add_listeners()
 
-    c = lutron.get_lutron_connection(config.LUTRON_BRIDGE_ADDR)
-    await c.open()
+    c = lutron.get_default_lutron_connection()
 
-    try:
-        await c.stream(handler)
-    except KeyboardInterrupt:
-        await c.close()
+    while not shutting_down:
+        try:
+            if await c.open():
+                await c.stream(handler)
+            else:
+                return
+        except asyncio.exceptions.IncompleteReadError:
+            if not shutting_down:
+                logger.warning('Connection closed unexpectedly. Retrying...')
+                await c.close()
 
 
 if __name__ == '__main__':
