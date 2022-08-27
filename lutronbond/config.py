@@ -5,7 +5,6 @@ def get_env(name, default=None):
     return os.environ.get(name, default)
 
 
-
 LUTRON_BRIDGE_ADDR = get_env('LUTRON_BRIDGE_ADDR', '192.168.86.247')
 BOND_BRIDGE_ADDR = get_env('BOND_BRIDGE_ADDR', '192.168.86.60')
 BOND_BRIDGE_API_TOKEN = get_env('BOND_BRIDGE_API_TOKEN', '913ca00159de3da0')

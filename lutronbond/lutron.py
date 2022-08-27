@@ -211,9 +211,9 @@ def get_default_lutron_connection():
 
 
 async def main():
-    l = get_lutron_connection(config.LUTRON_BRIDGE_ADDR)
-    await l.open()
-    await l.stream(lambda e: print(e))
+    conn = get_lutron_connection(config.LUTRON_BRIDGE_ADDR)
+    await conn.open()
+    await conn.stream(lambda e: print(e))
 
 
 if __name__ == '__main__':

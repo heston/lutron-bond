@@ -1,5 +1,4 @@
 import asyncio
-import functools
 import logging
 import signal
 
