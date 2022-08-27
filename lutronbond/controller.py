@@ -49,19 +49,12 @@ async def shutdown():
     logger.info('Exiting...')
 
 
-def chaosmonkey():
-    logger.info('!!chaosmonkey strikes again!!')
-    lutron.get_default_lutron_connection()._writer.close()
-
-
 async def main():
     loop = asyncio.get_running_loop()
     loop.add_signal_handler(
         signal.SIGINT,
         lambda: loop.create_task(shutdown())
     )
-
-    # loop.call_later(5, chaosmonkey)
 
     add_listeners()
 
