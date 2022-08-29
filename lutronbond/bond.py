@@ -68,13 +68,20 @@ def get_handler(config):
     return handler
 
 
+async def verify_connection():
+    logger.debug('Verifying Bond Bridge connection...')
+    result = await get_default_bond_connection().version()
+    logger.info(
+        'Connected to Bond Bridge. Model {model}. Version {fw_ver}'.format(
+            **result
+        )
+    )
+
+
 async def main():
     """Example of library usage."""
 
-    bond = get_bond_connection(
-        config.BOND_BRIDGE_ADDR,
-        config.BOND_BRIDGE_API_TOKEN
-    )
+    bond = get_default_bond_connection()
 
     print("\nVersion:")
     print(await bond.version())

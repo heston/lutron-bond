@@ -7,11 +7,8 @@ from . import config
 from . import eventbus
 from . import lutron
 
-EVENT_OPERATION = lutron.Operation.DEVICE
 
-logging.basicConfig(
-    level=logging.INFO
-)
+EVENT_OPERATION = lutron.Operation.DEVICE
 
 logger = logging.getLogger(__name__)
 
@@ -48,12 +45,15 @@ async def shutdown():
     logger.info('Exiting...')
 
 
-async def main():
+async def start(notify=None):
+    logger.info('Starting up...')
     loop = asyncio.get_running_loop()
     loop.add_signal_handler(
         signal.SIGINT,
         lambda: loop.create_task(shutdown())
     )
+
+    await bond.verify_connection()
 
     add_listeners()
 
@@ -72,4 +72,4 @@ async def main():
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    asyncio.run(start())

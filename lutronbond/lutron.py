@@ -118,7 +118,7 @@ class LutronConnection:
         self._writer = None
 
     async def connect(self):
-        logger.info(
+        logger.debug(
             'Establishing connection to Lutron bridge at %s:%s',
             self.host,
             self.port
@@ -129,7 +129,7 @@ class LutronConnection:
             self.port
         )
         self.is_connected = True
-        logger.info('Connected!')
+        logger.info('Connected to Lutron Bridge')
         return True
 
     async def close(self):
@@ -173,7 +173,7 @@ class LutronConnection:
                 continue
 
             if data.startswith(READY_PROMPT):
-                logger.info('Login successful!')
+                logger.debug('Login successful!')
                 self.is_logged_in = True
 
             return True
@@ -217,5 +217,4 @@ async def main():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
     asyncio.run(main())

@@ -68,17 +68,17 @@ LUTRON_BOND_MAPPING = {
         'bondID': '6409d2a2',
         'actions': FAN_LIGHT_CONFIG,
     },
-    -1: {
+    71: {
         'name': 'Master Bedroom Fan',
         'bondID': '6409d2a2',
         'actions': FAN_CONFIG,
     },
-    -2: {
+    72: {
         'name': 'Living Room Fan Light',
         'bondID': '0b965995',
-        'action': FAN_LIGHT_CONFIG,
+        'actions': FAN_LIGHT_CONFIG,
     },
-    -3: {
+    73: {
         'name': 'Living Room Fan',
         'bondID': '0b965995',
         'actions': FAN_CONFIG,
