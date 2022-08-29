@@ -21,5 +21,10 @@ pip install -r requirements.txt
 export LUTRON_BRIDGE_ADDR="<IP address of Lutron bridge>"
 export BOND_BRIDGE_ADDR="<IP address of Bond Bridge>"
 export BOND_BRIDGE_API_TOKEN="<Bond Bridge API token>"
-python -m lutronbond.controller
+./run.sh
 ```
+
+
+# Configuration
+
+Look at [blob/main/lutronbond/config.py](config.py) for example configuration.
