@@ -1,9 +1,12 @@
+from __future__ import annotations
 import asyncio
 import enum
 import functools
 import logging
+import typing
 
 from . import config
+
 
 LOGIN_PROMPT = b'login: '
 PASSWORD_PROMPT = b'password: '
@@ -45,19 +48,24 @@ class Action(enum.Enum):
 
 class LutronEvent:
 
-    def __init__(self, operation, device, component, action):
+    def __init__(
+            self,
+            operation: Operation,
+            device: int,
+            component: Component,
+            action: Action):
         self.operation = operation
         self.device = device
         self.component = component
         self.action = action
 
     @classmethod
-    def parse(cls, raw):
+    def parse(cls, raw: bytes) -> LutronEvent:
         logger.debug('Parsing: %s', raw)
 
-        # ~OUTPUT,16,1,0.00
+        # ~OUTPUT,16,2,3
         if not raw.startswith(b'~'):
-            raise ValueError('Unrecognized event: {}'.format(raw))
+            raise ValueError('Unrecognized event: {!r}'.format(raw))
 
         # Consume leading ~
         raw = raw.strip()[1:]
@@ -68,7 +76,7 @@ class LutronEvent:
             component = int(parts[2])
             action = float(parts[3])
         except IndexError:
-            raise ValueError('Invalid event format: {}'.format(raw))
+            raise ValueError('Invalid event format: {!r}'.format(raw))
 
         try:
             operation_enum = Operation(operation)
@@ -87,7 +95,7 @@ class LutronEvent:
 
         return cls(operation_enum, device, component_enum, action_enum)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             'LutronEvent('
             'operation={}, device={}, component={}, action={}'
@@ -96,7 +104,7 @@ class LutronEvent:
             )
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             'LutronEvent({}:{} {}:{})'.format(
                 self.operation.name,
@@ -109,15 +117,15 @@ class LutronEvent:
 
 class LutronConnection:
 
-    def __init__(self, host, port):
+    def __init__(self, host: str, port: int) -> None:
         self.host = host
         self.port = port
-        self.is_connected = False
-        self.is_logged_in = False
-        self._reader = None
-        self._writer = None
+        self.is_connected: bool = False
+        self.is_logged_in: bool = False
+        self._reader: asyncio.StreamReader
+        self._writer: asyncio.StreamWriter
 
-    async def connect(self):
+    async def connect(self) -> bool:
         logger.debug(
             'Establishing connection to Lutron bridge at %s:%s',
             self.host,
@@ -132,7 +140,7 @@ class LutronConnection:
         logger.info('Connected to Lutron Bridge')
         return True
 
-    async def close(self):
+    async def close(self) -> None:
         if not self.is_connected:
             return
 
@@ -143,7 +151,7 @@ class LutronConnection:
         self.is_connected = False
         self.is_logged_in = False
 
-    async def login(self):
+    async def login(self) -> bool:
         if not self.is_connected:
             raise RuntimeError('Socket not connected')
 
@@ -181,11 +189,14 @@ class LutronConnection:
         logger.error('Unable to log in')
         return False
 
-    async def open(self):
+    async def open(self) -> bool:
         await self.connect()
         return await self.login()
 
-    async def stream(self, callback):
+    async def stream(
+            self,
+            callback: typing.Callable[[LutronEvent], typing.Awaitable[None]]
+    ) -> None:
         logger.info('Listening for events...')
 
         while self.is_logged_in and self.is_connected:
@@ -202,18 +213,22 @@ class LutronConnection:
 
 
 @functools.cache
-def get_lutron_connection(host):
+def get_lutron_connection(host: str) -> LutronConnection:
     return LutronConnection(host, 23)
 
 
-def get_default_lutron_connection():
+def get_default_lutron_connection() -> LutronConnection:
     return get_lutron_connection(config.LUTRON_BRIDGE_ADDR)
 
 
-async def main():
+async def main() -> None:
     conn = get_lutron_connection(config.LUTRON_BRIDGE_ADDR)
     await conn.open()
-    await conn.stream(lambda e: print(e))
+
+    async def print_event(evt: LutronEvent) -> None:
+        print(evt)
+
+    await conn.stream(print_event)
 
 
 if __name__ == '__main__':

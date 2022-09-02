@@ -6,17 +6,40 @@
 #
 attrs==22.1.0
     # via pytest
+flake8==5.0.4
+    # via -r requirements_dev.in
 iniconfig==1.1.1
     # via pytest
+mccabe==0.7.0
+    # via flake8
+mypy==0.971
+    # via -r requirements_dev.in
+mypy-extensions==0.4.3
+    # via mypy
 packaging==21.3
     # via pytest
 pluggy==1.0.0
     # via pytest
 py==1.11.0
     # via pytest
+pycodestyle==2.9.1
+    # via flake8
+pyflakes==2.5.0
+    # via flake8
 pyparsing==3.0.9
     # via packaging
 pytest==7.1.2
+    # via
+    #   -r requirements_dev.in
+    #   pytest-asyncio
+    #   pytest-mock
+pytest-asyncio==0.19.0
+    # via -r requirements_dev.in
+pytest-mock==3.8.2
     # via -r requirements_dev.in
 tomli==2.0.1
-    # via pytest
+    # via
+    #   mypy
+    #   pytest
+typing-extensions==4.3.0
+    # via mypy

@@ -39,8 +39,8 @@ async def test_pub__invalid_key(bus):
 
 
 @pytest.mark.asyncio
-async def test_pub__single_action(bus, Amock):
-    action = Amock()
+async def test_pub__single_action(bus, amock):
+    action = amock()
     bus.sub('test', action)
 
     await bus.pub('test')
@@ -49,9 +49,9 @@ async def test_pub__single_action(bus, Amock):
 
 
 @pytest.mark.asyncio
-async def test_pub__multiple_action(bus, Amock):
-    action1 = Amock()
-    action2 = Amock()
+async def test_pub__multiple_action(bus, amock):
+    action1 = amock()
+    action2 = amock()
     bus.sub('test', action1)
     bus.sub('test', action2)
 
@@ -62,10 +62,24 @@ async def test_pub__multiple_action(bus, Amock):
 
 
 @pytest.mark.asyncio
-async def test_pub__action_with_args(bus, Amock):
-    action = Amock()
+async def test_pub__action_with_args(bus, amock):
+    action = amock()
     bus.sub('test', action)
 
     await bus.pub('test', 1, arg=2)
 
     action.assert_called_with(1, arg=2)
+
+
+def test_get_default_bus():
+    result1 = eventbus.get_bus()
+    result2 = eventbus.get_bus()
+
+    assert result1 is result2
+
+
+def test_get_different_bus():
+    result1 = eventbus.get_bus()
+    result2 = eventbus.get_bus('another')
+
+    assert result1 is not result2

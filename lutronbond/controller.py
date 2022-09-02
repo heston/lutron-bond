@@ -8,12 +8,12 @@ from . import eventbus
 from . import lutron
 
 
-EVENT_OPERATION = lutron.Operation.DEVICE
+EVENT_OPERATION: lutron.Operation = lutron.Operation.DEVICE
 
 logger = logging.getLogger(__name__)
 
 
-async def handler(lutron_event):
+async def handler(lutron_event: lutron.LutronEvent) -> None:
     if lutron_event.operation != EVENT_OPERATION:
         logger.debug('Skipping Lutron event: %s', lutron_event)
         return
@@ -26,7 +26,7 @@ async def handler(lutron_event):
     )
 
 
-def add_listeners():
+def add_listeners() -> None:
     for lutron_id, subconfig in config.LUTRON_BOND_MAPPING.items():
         logger.debug('Subscribing to %s: %s', lutron_id, subconfig)
         eventbus.get_bus().sub(
@@ -35,17 +35,17 @@ def add_listeners():
         )
 
 
-shutting_down = False
+shutting_down: bool = False
 
 
-async def shutdown():
+async def shutdown() -> None:
     global shutting_down
     shutting_down = True
     await lutron.get_default_lutron_connection().close()
     logger.info('Exiting...')
 
 
-async def start(notify=None):
+async def start() -> None:
     logger.info('Starting up...')
     loop = asyncio.get_running_loop()
     loop.add_signal_handler(

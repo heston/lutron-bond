@@ -2,45 +2,49 @@ import asyncio
 import functools
 import logging
 import pprint
+import typing
 
-import bond_async
+import bond_async  # type: ignore
 
 from . import config
+from . import lutron
 
 
 logger = logging.getLogger(__name__)
 
 
 @functools.cache
-def get_bond_connection(host, api_token):
+def get_bond_connection(host: str, api_token: str) -> bond_async.Bond:
     return bond_async.Bond(host, api_token)
 
 
-def get_default_bond_connection():
+def get_default_bond_connection() -> bond_async.Bond:
     return get_bond_connection(
         config.BOND_BRIDGE_ADDR,
         config.BOND_BRIDGE_API_TOKEN
     )
 
 
-def get_handler(config):
-    async def handler(event):
+def get_handler(
+        config: dict
+) -> typing.Callable[[lutron.LutronEvent], typing.Awaitable[bool]]:
+    async def handler(event: lutron.LutronEvent) -> bool:
         actions = config['actions']
 
         try:
             component = actions[event.component.name]
         except KeyError:
             logger.warning('Unknown component: %s', event.component)
-            return
+            return False
 
         try:
             action = component[event.action.name]
         except KeyError:
             logger.warning('Unknown action: %s', event.action)
-            return
+            return False
 
         if action is None:
-            return
+            return False
 
         arg = None
         if isinstance(action, dict):
@@ -64,11 +68,12 @@ def get_handler(config):
             action,
             config['bondID']
         )
+        return True
 
     return handler
 
 
-async def verify_connection():
+async def verify_connection() -> None:
     logger.debug('Verifying Bond Bridge connection...')
     result = await get_default_bond_connection().version()
     logger.info(
@@ -78,7 +83,7 @@ async def verify_connection():
     )
 
 
-async def main():
+async def main() -> None:
     """Example of library usage."""
 
     bond = get_default_bond_connection()

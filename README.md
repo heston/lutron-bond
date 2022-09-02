@@ -94,3 +94,22 @@ python3 -m lutronbond.bond
 
 This will dump a lot of info in JSON format to stdout about the Bond Bridge.
 Reading this should provide the required IDs.
+
+
+# Development & Testing
+
+Set up development dependencies:
+```bash
+source venv/bin/activate
+pip install -r requirements_dev.txt
+```
+
+Running lint:
+```bash
+flake8
+```
+
+Running unit tests:
+```bash
+pytest
+```

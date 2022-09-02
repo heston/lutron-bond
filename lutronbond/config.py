@@ -1,7 +1,8 @@
 import os
+import typing
 
 
-def get_env(name, default=None):
+def get_env(name: str, default: typing.Optional[str] = None) -> str|None:
     return os.environ.get(name, default)
 
 

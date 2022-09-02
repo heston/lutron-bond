@@ -10,7 +10,7 @@ class AsyncMock(Mock):
         sup = super(AsyncMock, self)
 
         async def coro():
-            return sup.__call__(*args, **kwargs)
+            return sup.__call__(*args, **kwargs)  # type: ignore
 
         return coro()
 
@@ -19,5 +19,5 @@ class AsyncMock(Mock):
 
 
 @pytest.fixture
-def Amock():
+def amock():
     return AsyncMock
