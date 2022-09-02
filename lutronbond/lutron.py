@@ -140,9 +140,9 @@ class LutronConnection:
         logger.info('Connected to Lutron Bridge')
         return True
 
-    async def close(self) -> None:
+    async def close(self) -> bool:
         if not self.is_connected:
-            return
+            return False
 
         logger.info('Closing connection...')
         self._writer.close()
@@ -150,6 +150,7 @@ class LutronConnection:
         logger.info('Connection closed')
         self.is_connected = False
         self.is_logged_in = False
+        return True
 
     async def login(self) -> bool:
         if not self.is_connected:
