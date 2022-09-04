@@ -12,6 +12,8 @@ async-timeout==4.0.2
     # via aiohttp
 attrs==22.1.0
     # via aiohttp
+backoff==2.1.2
+    # via -r requirements.in
 bond-async==0.1.22
     # via -r requirements.in
 charset-normalizer==2.1.1
