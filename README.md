@@ -22,6 +22,15 @@ export BOND_BRIDGE_API_TOKEN="<Bond Bridge API token>"
 ./run.sh
 ```
 
+Alternatively, the environment variable export lines may be specified in a file
+named `.env` in the same directory as `run.sh`. For example:
+
+```txt
+export LUTRON_BRIDGE_ADDR="<IP address of Lutron bridge>"
+export BOND_BRIDGE_ADDR="<IP address of Bond Bridge>"
+export BOND_BRIDGE_API_TOKEN="<Bond Bridge API token>"
+```
+
 The software must be running somewhere on your local network (with access to
 both hubs) in order for it work (duh). A Raspberry Pi, or other always-on
 computer is a good choice. However, how to deploy this is left as an exercise
