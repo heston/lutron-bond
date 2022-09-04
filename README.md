@@ -104,12 +104,17 @@ source venv/bin/activate
 pip install -r requirements_dev.txt
 ```
 
-Running lint:
+Run lint:
 ```bash
 flake8
 ```
 
-Running unit tests:
+Run static analysis:
+```bash
+mypy -p lutronbond -p tests
+```
+
+Run unit tests:
 ```bash
 pytest
 ```

@@ -1,5 +1,7 @@
 import pytest
 
+import aiohttp
+
 from lutronbond import bond, lutron
 
 
@@ -163,6 +165,70 @@ async def test_get_handler__dict_action(
         '%s request sent to Bond Bridge %s',
         'Hi',
         'bondid'
+    )
+    assert result is True
+
+
+@pytest.mark.asyncio
+async def test_get_handler__retry_on_exception__failed(
+        mocker,
+        lutron_event,
+        logger,
+        mock_bond_action,
+        mock_default_bond_connection):
+    mock_default_bond_connection.action.side_effect = (
+        aiohttp.client_exceptions.ClientConnectorError(
+            mocker.Mock('192.168.86.60:80'),
+            mocker.Mock(errno=1, strerror='huh')
+        )
+    )
+    handler = bond.get_handler({
+        'actions': {'UNKNOWN': {'UNKNOWN': 'Hi'}},
+        'bondID': 'bondid',
+    })
+
+    result = await handler(lutron_event)
+
+    mock_bond_action.assert_called_with('Hi', argument=None)
+    mock_default_bond_connection.action.assert_called_with(
+        'bondid',
+        mock_bond_action.return_value
+    )
+    assert result is False
+
+
+@pytest.mark.asyncio
+async def test_get_handler__retry_on_exception__success(
+        mocker,
+        lutron_event,
+        logger,
+        mock_bond_action,
+        mock_default_bond_connection):
+
+    def effect():
+        yield aiohttp.client_exceptions.ClientConnectorError(
+            mocker.Mock('192.168.86.60:80'),
+            mocker.Mock(errno=1, strerror='huh')
+        )
+        yield aiohttp.client_exceptions.ClientConnectorError(
+            mocker.Mock('192.168.86.60:80'),
+            mocker.Mock(errno=1, strerror='huh')
+        )
+        yield True
+
+    mock_default_bond_connection.action.side_effect = effect()
+
+    handler = bond.get_handler({
+        'actions': {'UNKNOWN': {'UNKNOWN': 'Hi'}},
+        'bondID': 'bondid',
+    })
+
+    result = await handler(lutron_event)
+
+    mock_bond_action.assert_called_with('Hi', argument=None)
+    mock_default_bond_connection.action.assert_called_with(
+        'bondid',
+        mock_bond_action.return_value
     )
     assert result is True
 

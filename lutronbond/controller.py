@@ -68,7 +68,8 @@ async def start() -> None:
         except asyncio.exceptions.IncompleteReadError:
             if not shutting_down:
                 logger.warning('Connection closed unexpectedly. Retrying...')
-                await c.close()
+        finally:
+            await c.close()
 
 
 if __name__ == '__main__':

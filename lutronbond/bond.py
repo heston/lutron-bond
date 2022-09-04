@@ -4,6 +4,8 @@ import logging
 import pprint
 import typing
 
+import aiohttp
+import backoff
 import bond_async  # type: ignore
 
 from . import config
@@ -11,6 +13,7 @@ from . import lutron
 
 
 logger = logging.getLogger(__name__)
+logging.getLogger('backoff').addHandler(logging.StreamHandler())
 
 
 @functools.cache
@@ -28,6 +31,7 @@ def get_default_bond_connection() -> bond_async.Bond:
 def get_handler(
         config: dict
 ) -> typing.Callable[[lutron.LutronEvent], typing.Awaitable[bool]]:
+
     async def handler(event: lutron.LutronEvent) -> bool:
         actions = config['actions']
 
@@ -58,17 +62,28 @@ def get_handler(
             arg
         )
 
-        await get_default_bond_connection().action(
-            config['bondID'],
-            bond_action
+        @backoff.on_exception(
+            backoff.expo,
+            aiohttp.client_exceptions.ClientConnectorError,
+            max_tries=5,
+            jitter=backoff.full_jitter
         )
+        async def do_action() -> bool:
+            await get_default_bond_connection().action(
+                config['bondID'],
+                bond_action
+            )
+            logger.info(
+                '%s request sent to Bond Bridge %s',
+                action,
+                config['bondID']
+            )
+            return True
 
-        logger.info(
-            '%s request sent to Bond Bridge %s',
-            action,
-            config['bondID']
-        )
-        return True
+        try:
+            return await do_action()
+        except aiohttp.client_exceptions.ClientConnectorError:
+            return False
 
     return handler
 
