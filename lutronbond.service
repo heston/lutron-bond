@@ -1,0 +1,15 @@
+[Unit]
+Description=Lutron Bond Bridge
+After=multi-user.target
+
+[Service]
+Type=idle
+Environment=PYTHONUNBUFFERED=1
+WorkingDirectory={{DIR}}
+ExecStart={{DIR}}/run.sh
+Restart=always
+RestartSec=5
+KillSignal=SIGINT
+
+[Install]
+WantedBy=multi-user.target
