@@ -88,5 +88,15 @@ LUTRON_BOND_MAPPING = {
         'name': 'Living Room Pico',
         'bondID': '0b965995',
         'actions': FAN_LIGHT_CONFIG,
-    }
+    },
+    29: {
+        'name': 'Guest Room Fan',
+        'bondID': 'cb22812453dceb35',
+        'actions': FAN_CONFIG,
+    },
+    75: {
+        'name': "Guest Room Fan Light",
+        'bondID': 'cb22812453dceb35',
+        'actions': FAN_LIGHT_CONFIG,
+    },
 }
