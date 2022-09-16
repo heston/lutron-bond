@@ -1,9 +1,19 @@
 import os
-import typing
 
 
-def get_env(name: str, default: typing.Optional[str] = None) -> str | None:
-    return os.environ.get(name, default)
+def get_env(name: str, default: str = '') -> str:
+    try:
+        result = os.environ[name]
+    except KeyError:
+        if not len(default):
+            raise RuntimeError(
+                f'Required configuration not found in environment: {name}. '
+                'Please set an environment variable with this name and try '
+                'again.'
+            )
+        else:
+            return default
+    return result
 
 
 LUTRON_BRIDGE_ADDR = get_env('LUTRON_BRIDGE_ADDR')
