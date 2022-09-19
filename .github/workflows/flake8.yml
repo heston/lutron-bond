@@ -19,5 +19,5 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r requirements_dev.txt
-    - name: Analysing the code with flake8
+    - name: Checking code with flake8
       run: flake8 lutronbond tests
