@@ -1,8 +1,8 @@
 # Lutron-Bond
 
-![Unit Tests](https://github.com/heston/lutronbond/actions/workflows/pytest.yml/badge.svg)
-![Lint](https://github.com/heston/lutronbond/actions/workflows/flake8.yml/badge.svg)
-![Static Analysis](https://github.com/heston/lutronbond/actions/workflows/mypy.yml/badge.svg)
+[![pytest](https://github.com/heston/lutron-bond/actions/workflows/pytest.yml/badge.svg)](https://github.com/heston/lutron-bond/actions/workflows/pytest.yml)
+[![flake8](https://github.com/heston/lutron-bond/actions/workflows/flake8.yml/badge.svg)](https://github.com/heston/lutron-bond/actions/workflows/flake8.yml)
+[![mypy](https://github.com/heston/lutron-bond/actions/workflows/mypy.yml/badge.svg)](https://github.com/heston/lutron-bond/actions/workflows/mypy.yml)
 
 Connector between Lutron Caseta SmartBridge Pro and Bond Bridge.
 
