@@ -111,7 +111,16 @@ Reading this should provide the required IDs.
 
 # Development & Testing
 
-Set up development dependencies:
+You can change the log level to see more (or less) output from the program.
+
+```bash
+export LUTRONBOND_LOG_LEVEL="DEBUG"
+```
+
+The following values are supported (from most to least verbose): `DEBUG`,
+`INFO`, `WARNING`, `ERROR`.
+
+To set up development dependencies:
 ```bash
 source venv/bin/activate
 pip install -r requirements_dev.txt
