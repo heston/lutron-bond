@@ -43,7 +43,10 @@ def env():
 
     for key, value in kv.items():
         if value is None:
-            del os.environ[key]
+            try:
+                del os.environ[key]
+            except KeyError:
+                pass
         else:
             os.environ[key] = value
 

@@ -98,6 +98,19 @@ async def verify_connection() -> None:
     )
 
 
+def keepalive() -> typing.Callable:
+    async def poll() -> None:
+        while True:
+            await asyncio.sleep(config.BOND_KEEPALIVE_INTERVAL)
+            await get_default_bond_connection().version()
+            logger.debug('Bond keepalive check successful')
+
+    loop = asyncio.get_event_loop()
+    task = loop.create_task(poll())
+
+    return lambda: task.cancel()
+
+
 async def main() -> None:
     """Example of library usage."""
 

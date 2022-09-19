@@ -54,6 +54,7 @@ async def start() -> None:
     )
 
     await bond.verify_connection()
+    cancel_bond_keepalive = bond.keepalive()
 
     add_listeners()
 
@@ -69,6 +70,7 @@ async def start() -> None:
             if not shutting_down:
                 logger.warning('Connection closed unexpectedly. Retrying...')
         finally:
+            cancel_bond_keepalive()
             await c.close()
 
 
