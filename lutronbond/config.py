@@ -103,7 +103,7 @@ LUTRON_BOND_MAPPING = {
     63: {
         'name': 'Fireplace Pico',
         'bondID': BOND_IDS['Living Room'],
-        'action': FAN_LIGHT_CONFIG
+        'actions': FAN_LIGHT_CONFIG
     },
     73: {
         'name': 'Living Room Fan',
