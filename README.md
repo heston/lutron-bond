@@ -1,5 +1,9 @@
 # Lutron-Bond
 
+![Unit Tests](https://github.com/heston/lutronbond/actions/workflows/pytest.yml/badge.svg)
+![Lint](https://github.com/heston/lutronbond/actions/workflows/flake8.yml/badge.svg)
+![Static Analysis](https://github.com/heston/lutronbond/actions/workflows/mypy.yml/badge.svg)
+
 Connector between Lutron Caseta SmartBridge Pro and Bond Bridge.
 
 # Requirements
