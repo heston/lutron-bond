@@ -72,41 +72,52 @@ FAN_CONFIG = {
     }
 }
 
+BOND_IDS = {
+    'Master Bedroom': '6409d2a2',
+    'Living Room': '0b965995',
+    'Guest Room': 'cb22812453dceb35',
+}
+
 LUTRON_BOND_MAPPING = {
     # Lutron Integration ID->Bond Device
     21: {
         'name': 'Master Bedroom Fan Light',
-        'bondID': '6409d2a2',
+        'bondID': BOND_IDS['Master Bedroom'],
         'actions': FAN_LIGHT_CONFIG,
     },
     71: {
         'name': 'Master Bedroom Fan',
-        'bondID': '6409d2a2',
+        'bondID': BOND_IDS['Master Bedroom'],
         'actions': FAN_CONFIG,
     },
     72: {
         'name': 'Living Room Fan Light',
-        'bondID': '0b965995',
+        'bondID': BOND_IDS['Living Room'],
         'actions': FAN_LIGHT_CONFIG,
-    },
-    73: {
-        'name': 'Living Room Fan',
-        'bondID': '0b965995',
-        'actions': FAN_CONFIG,
     },
     8: {
         'name': 'Living Room Pico',
-        'bondID': '0b965995',
+        'bondID': BOND_IDS['Living Room'],
         'actions': FAN_LIGHT_CONFIG,
+    },
+    63: {
+        'name': 'Fireplace Pico',
+        'bondID': BOND_IDS['Living Room'],
+        'action': FAN_LIGHT_CONFIG
+    },
+    73: {
+        'name': 'Living Room Fan',
+        'bondID': BOND_IDS['Living Room'],
+        'actions': FAN_CONFIG,
     },
     29: {
         'name': 'Guest Room Fan',
-        'bondID': 'cb22812453dceb35',
+        'bondID': BOND_IDS['Guest Room'],
         'actions': FAN_CONFIG,
     },
     75: {
-        'name': "Guest Room Fan Light",
-        'bondID': 'cb22812453dceb35',
+        'name': 'Guest Room Fan Light',
+        'bondID': BOND_IDS['Guest Room'],
         'actions': FAN_LIGHT_CONFIG,
     },
 }
