@@ -107,6 +107,7 @@ def keepalive() -> typing.Callable:
     async def poll() -> None:
         while True:
             await asyncio.sleep(config.BOND_KEEPALIVE_INTERVAL)
+            logger.debug('Starting Bond keepalive check')
             await get_default_bond_connection().version()
             logger.debug('Bond keepalive check successful')
 
