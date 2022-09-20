@@ -69,6 +69,11 @@ def get_handler(
             jitter=backoff.full_jitter
         )
         async def do_action() -> bool:
+            logger.debug(
+                'Starting %s request to Bond Bridge %s',
+                action,
+                config['bondID']
+            )
             await get_default_bond_connection().action(
                 config['bondID'],
                 bond_action
