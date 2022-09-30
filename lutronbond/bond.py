@@ -29,11 +29,11 @@ def get_default_bond_connection() -> bond_async.Bond:
 
 
 def get_handler(
-        config: dict
+        configmap: dict
 ) -> typing.Callable[[lutron.LutronEvent], typing.Awaitable[bool]]:
 
     async def handler(event: lutron.LutronEvent) -> bool:
-        actions = config['actions']
+        actions = configmap['actions']
 
         try:
             component = actions[event.component.name]
@@ -72,16 +72,16 @@ def get_handler(
             logger.debug(
                 'Starting %s request to Bond Bridge %s',
                 action,
-                config['bondID']
+                configmap['bondID']
             )
             await get_default_bond_connection().action(
-                config['bondID'],
+                configmap['bondID'],
                 bond_action
             )
             logger.info(
                 '%s request sent to Bond Bridge %s',
                 action,
-                config['bondID']
+                configmap['bondID']
             )
             return True
 

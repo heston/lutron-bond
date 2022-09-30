@@ -58,13 +58,13 @@ def test_env__in_environment(env, import_config):
 
 
 def test_env__not_in_environment(env, import_config):
-    env('BOND_BRIDGE_API_TOKEN', None)
+    env('LB_BOND_BRIDGE_API_TOKEN', None)
 
     with pytest.raises(RuntimeError) as e:
         import_config()
 
     assert str(e.value) == (
         'Required configuration not found in environment: '
-        'BOND_BRIDGE_API_TOKEN. Please set an environment variable with this '
-        'name and try again.'
+        'LB_BOND_BRIDGE_API_TOKEN. Please set an environment variable with '
+        'this name and try again.'
     )

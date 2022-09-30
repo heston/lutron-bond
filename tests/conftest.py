@@ -53,6 +53,6 @@ def env():
 
 # Set some default environment variables for testing purposes. These can be
 # overridden with the `env` fixture on a per-test basis.
-os.environ['LUTRON_BRIDGE_ADDR'] = '10.0.0.10'
-os.environ['BOND_BRIDGE_ADDR'] = '10.0.0.11'
-os.environ['BOND_BRIDGE_API_TOKEN'] = 'asdfasdf'
+os.environ['LB_LUTRON_BRIDGE_ADDR'] = '10.0.0.10'
+os.environ['LB_BOND_BRIDGE_ADDR'] = '10.0.0.11'
+os.environ['LB_BOND_BRIDGE_API_TOKEN'] = 'asdfasdf'
