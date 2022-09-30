@@ -65,7 +65,7 @@ def get_handler(
         @backoff.on_exception(
             backoff.expo,
             aiohttp.client_exceptions.ClientConnectorError,
-            max_tries=5,
+            max_tries=config.BOND_RETRY_COUNT,
             jitter=backoff.full_jitter
         )
         async def do_action() -> bool:
