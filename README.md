@@ -20,9 +20,9 @@ Connector between Lutron Caseta SmartBridge Pro and Bond Bridge.
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-export LUTRON_BRIDGE_ADDR="<IP address of Lutron bridge>"
-export BOND_BRIDGE_ADDR="<IP address of Bond Bridge>"
-export BOND_BRIDGE_API_TOKEN="<Bond Bridge API token>"
+export LB_LUTRON_BRIDGE_ADDR="<IP address of Lutron bridge>"
+export LB_BOND_BRIDGE_ADDR="<IP address of Bond Bridge>"
+export LB_BOND_BRIDGE_API_TOKEN="<Bond Bridge API token>"
 ./run.sh
 ```
 
