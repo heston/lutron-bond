@@ -267,6 +267,22 @@ async def test_keepalive(
 
 
 @pytest.mark.asyncio
+async def test_keepalive_disabled(
+        mock_default_bond_connection,
+        logger,
+        mocker
+):
+    mocker.patch('lutronbond.config.BOND_KEEPALIVE_INTERVAL', 0)
+
+    cancel = bond.keepalive()
+    await asyncio.sleep(0.01)
+
+    assert cancel() is True
+    assert not mock_default_bond_connection.version.called
+    assert not logger.debug.called
+
+
+@pytest.mark.asyncio
 async def test_keepalive_cancel(
         mock_default_bond_connection,
         logger,

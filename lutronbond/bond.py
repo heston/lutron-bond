@@ -104,6 +104,9 @@ async def verify_connection() -> None:
 
 
 def keepalive() -> typing.Callable:
+    if config.BOND_KEEPALIVE_INTERVAL == 0:
+        return lambda: True
+
     async def poll() -> None:
         while True:
             await asyncio.sleep(config.BOND_KEEPALIVE_INTERVAL)
