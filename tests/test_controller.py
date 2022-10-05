@@ -101,6 +101,7 @@ async def test__start(mocker, logger, amock):
         'lutronbond.bond.verify_connection',
         amock()
     )
+    keepalive = mocker.patch('lutronbond.bond.keepalive')
     mocker.patch('lutronbond.controller.add_listeners')
     lutron_connection = mocker.patch(
         'lutronbond.lutron.get_default_lutron_connection'
@@ -118,6 +119,7 @@ async def test__start(mocker, logger, amock):
 
     loop.add_signal_handler.assert_called_with(signal.SIGINT, mocker.ANY)
     assert verify_connection.called
+    assert keepalive.called
     assert lutron_connection.open.called
     lutron_connection.stream.assert_called_with(controller.handler)
 
@@ -131,6 +133,7 @@ async def test__start__cannot_open(mocker, logger, amock):
         'lutronbond.bond.verify_connection',
         amock()
     )
+    keepalive = mocker.patch('lutronbond.bond.keepalive')
     mocker.patch('lutronbond.controller.add_listeners')
     lutron_connection = mocker.patch(
         'lutronbond.lutron.get_default_lutron_connection'
@@ -144,6 +147,7 @@ async def test__start__cannot_open(mocker, logger, amock):
 
     assert not lutron_connection.stream.called
     assert lutron_connection.close.called
+    assert keepalive.return_value.called
 
 
 @pytest.mark.asyncio
@@ -153,6 +157,7 @@ async def test__start__read_error(mocker, logger, amock):
         'lutronbond.bond.verify_connection',
         amock()
     )
+    mocker.patch('lutronbond.bond.keepalive')
     mocker.patch('lutronbond.controller.add_listeners')
     lutron_connection = mocker.patch(
         'lutronbond.lutron.get_default_lutron_connection'

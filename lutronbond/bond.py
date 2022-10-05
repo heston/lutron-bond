@@ -29,11 +29,11 @@ def get_default_bond_connection() -> bond_async.Bond:
 
 
 def get_handler(
-        config: dict
+        configmap: dict
 ) -> typing.Callable[[lutron.LutronEvent], typing.Awaitable[bool]]:
 
     async def handler(event: lutron.LutronEvent) -> bool:
-        actions = config['actions']
+        actions = configmap['actions']
 
         try:
             component = actions[event.component.name]
@@ -65,18 +65,23 @@ def get_handler(
         @backoff.on_exception(
             backoff.expo,
             aiohttp.client_exceptions.ClientConnectorError,
-            max_tries=5,
+            max_tries=config.BOND_RETRY_COUNT,
             jitter=backoff.full_jitter
         )
         async def do_action() -> bool:
+            logger.debug(
+                'Starting %s request to Bond Bridge %s',
+                action,
+                configmap['bondID']
+            )
             await get_default_bond_connection().action(
-                config['bondID'],
+                configmap['bondID'],
                 bond_action
             )
             logger.info(
                 '%s request sent to Bond Bridge %s',
                 action,
-                config['bondID']
+                configmap['bondID']
             )
             return True
 
@@ -96,6 +101,23 @@ async def verify_connection() -> None:
             **result
         )
     )
+
+
+def keepalive() -> typing.Callable:
+    if config.BOND_KEEPALIVE_INTERVAL == 0:
+        return lambda: True
+
+    async def poll() -> None:
+        while True:
+            await asyncio.sleep(config.BOND_KEEPALIVE_INTERVAL)
+            logger.debug('Starting Bond keepalive check')
+            await get_default_bond_connection().version()
+            logger.debug('Bond keepalive check successful')
+
+    loop = asyncio.get_event_loop()
+    task = loop.create_task(poll())
+
+    return lambda: task.cancel()
 
 
 async def main() -> None:

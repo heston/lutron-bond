@@ -20,9 +20,9 @@ Connector between Lutron Caseta SmartBridge Pro and Bond Bridge.
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-export LUTRON_BRIDGE_ADDR="<IP address of Lutron bridge>"
-export BOND_BRIDGE_ADDR="<IP address of Bond Bridge>"
-export BOND_BRIDGE_API_TOKEN="<Bond Bridge API token>"
+export LB_LUTRON_BRIDGE_ADDR="<IP address of Lutron bridge>"
+export LB_BOND_BRIDGE_ADDR="<IP address of Bond Bridge>"
+export LB_BOND_BRIDGE_API_TOKEN="<Bond Bridge API token>"
 ./run.sh
 ```
 
@@ -30,9 +30,9 @@ Alternatively, the environment variable export lines may be specified in a file
 named `.env` in the same directory as `run.sh`. For example:
 
 ```txt
-export LUTRON_BRIDGE_ADDR="<IP address of Lutron bridge>"
-export BOND_BRIDGE_ADDR="<IP address of Bond Bridge>"
-export BOND_BRIDGE_API_TOKEN="<Bond Bridge API token>"
+export LB_LUTRON_BRIDGE_ADDR="<IP address of Lutron bridge>"
+export LB_BOND_BRIDGE_ADDR="<IP address of Bond Bridge>"
+export LB_BOND_BRIDGE_API_TOKEN="<Bond Bridge API token>"
 ```
 
 The software must be running somewhere on your local network (with access to
@@ -108,10 +108,38 @@ python3 -m lutronbond.bond
 This will dump a lot of info in JSON format to stdout about the Bond Bridge.
 Reading this should provide the required IDs.
 
+# Reliability Tuning
+
+In real-world testing, sometimes requests to the Bond Bridge time out or
+experience high latency. The following environment variables control settings
+that may help alleviate these issues:
+
+```
+LB_BOND_KEEPALIVE_INTERVAL=0
+```
+This will periodically ping the Bond Bridge to ensure there is a valid route
+to it on the local network. The value is the number of seconds between pings. A
+value of `0` (the default) disables this feature. A reasonable value is 60-180.
+
+```
+LB_BOND_RETRY_COUNT=5
+```
+The number of times to retry a request to the Bond Bridge in the case of a
+connection error. A higher value will increase reliability, at the cost of
+higher latency. Default value is 5.
 
 # Development & Testing
 
-Set up development dependencies:
+You can change the log level to see more (or less) output from the program.
+
+```bash
+export LB_LOG_LEVEL="DEBUG"
+```
+
+The following values are supported (from most to least verbose): `DEBUG`,
+`INFO`, `WARNING`, `ERROR`.
+
+To set up development dependencies:
 ```bash
 source venv/bin/activate
 pip install -r requirements_dev.txt

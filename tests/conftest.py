@@ -43,13 +43,16 @@ def env():
 
     for key, value in kv.items():
         if value is None:
-            del os.environ[key]
+            try:
+                del os.environ[key]
+            except KeyError:
+                pass
         else:
             os.environ[key] = value
 
 
 # Set some default environment variables for testing purposes. These can be
 # overridden with the `env` fixture on a per-test basis.
-os.environ['LUTRON_BRIDGE_ADDR'] = '10.0.0.10'
-os.environ['BOND_BRIDGE_ADDR'] = '10.0.0.11'
-os.environ['BOND_BRIDGE_API_TOKEN'] = 'asdfasdf'
+os.environ['LB_LUTRON_BRIDGE_ADDR'] = '10.0.0.10'
+os.environ['LB_BOND_BRIDGE_ADDR'] = '10.0.0.11'
+os.environ['LB_BOND_BRIDGE_API_TOKEN'] = 'asdfasdf'

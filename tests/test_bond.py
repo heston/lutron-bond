@@ -1,6 +1,7 @@
-import pytest
+import asyncio
 
 import aiohttp
+import pytest
 
 from lutronbond import bond, lutron
 
@@ -246,3 +247,53 @@ async def test_verify_connection(mock_default_bond_connection, logger):
     logger.info.assert_called_with(
         'Connected to Bond Bridge. Model model. Version version'
     )
+
+
+@pytest.mark.asyncio
+async def test_keepalive(
+        mock_default_bond_connection,
+        logger,
+        mocker,
+        event_loop
+):
+    mocker.patch('lutronbond.config.BOND_KEEPALIVE_INTERVAL', 0.01)
+
+    cancel = bond.keepalive()
+    event_loop.call_later(0.02, cancel)
+    await asyncio.sleep(0.03)
+
+    assert mock_default_bond_connection.version.called
+    logger.debug.assert_called_with('Bond keepalive check successful')
+
+
+@pytest.mark.asyncio
+async def test_keepalive_disabled(
+        mock_default_bond_connection,
+        logger,
+        mocker
+):
+    mocker.patch('lutronbond.config.BOND_KEEPALIVE_INTERVAL', 0)
+
+    cancel = bond.keepalive()
+    await asyncio.sleep(0.01)
+
+    assert cancel() is True
+    assert not mock_default_bond_connection.version.called
+    assert not logger.debug.called
+
+
+@pytest.mark.asyncio
+async def test_keepalive_cancel(
+        mock_default_bond_connection,
+        logger,
+        mocker,
+        event_loop
+):
+    mocker.patch('lutronbond.config.BOND_KEEPALIVE_INTERVAL', 0.02)
+
+    cancel = bond.keepalive()
+    event_loop.call_later(0.01, cancel)
+    await asyncio.sleep(0.03)
+
+    assert not mock_default_bond_connection.version.called
+    assert not logger.debug.called

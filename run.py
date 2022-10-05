@@ -1,11 +1,11 @@
 import asyncio
 import logging
 
-from lutronbond import controller
+from lutronbond import config, controller
 
 
 logging.basicConfig(
-    level=logging.INFO
+    level=config.LOG_LEVEL
 )
 
 
