@@ -30,7 +30,7 @@ FAN_LIGHT_CONFIG = {
         'RELEASE': None,
     },
     'BTN_2': {
-        'PRESS': 'ToggleLight',
+        'PRESS': 'TurnLightOn',
         'RELEASE': None,
     },
     'BTN_3': {
