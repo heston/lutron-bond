@@ -1,4 +1,5 @@
 import os
+from typing import Dict
 
 
 def get_env(name: str, default: str = '') -> str:
@@ -17,6 +18,7 @@ def get_env(name: str, default: str = '') -> str:
 
 
 LUTRON_BRIDGE_ADDR = get_env('LB_LUTRON_BRIDGE_ADDR')
+LUTRON_BRIDGE2_ADDR = get_env('LB_LUTRON_BRIDGE2_ADDR')
 BOND_BRIDGE_ADDR = get_env('LB_BOND_BRIDGE_ADDR')
 BOND_BRIDGE_API_TOKEN = get_env('LB_BOND_BRIDGE_API_TOKEN')
 
@@ -82,7 +84,7 @@ BOND_IDS = {
     'Guest Room': 'cb22812453dceb35',
 }
 
-LUTRON_BOND_MAPPING = {
+LUTRON_BOND_MAPPING: Dict[int, Dict] = {
     # Lutron Integration ID->Bond Device
     21: {
         'name': 'Master Bedroom Fan Light',
@@ -124,4 +126,8 @@ LUTRON_BOND_MAPPING = {
         'bondID': BOND_IDS['Guest Room'],
         'actions': FAN_LIGHT_CONFIG,
     },
+}
+
+LUTRON2_BOND_MAPPING: Dict[int, Dict] = {
+
 }
