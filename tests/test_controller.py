@@ -92,12 +92,12 @@ def test__add_listeners(mocker, logger, bus, bond_get_handler, import_config):
 @pytest.mark.asyncio
 async def test__shutdown(mocker, amock, logger):
     get_connection = mocker.patch(
-        'lutronbond.lutron.get_lutron_connection'
+        'lutronbond.lutron.LutronConnection'
     )
     get_connection.return_value.close = amock()
 
-    lutron.connections.append(get_connection('a'))
-    lutron.connections.append(get_connection('b'))
+    lutron.get_lutron_connection('a')
+    lutron.get_lutron_connection('b')
 
     assert controller.shutting_down is False
 
