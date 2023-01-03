@@ -37,7 +37,10 @@ def add_listeners() -> None:
             bond.get_handler(subconfig)
         )
 
-    if getattr(config, 'LUTRON_BRIDGE2_ADDR', None) and getattr(config, 'LUTRON2_BOND_MAPPING', None):
+    if (
+            getattr(config, 'LUTRON_BRIDGE2_ADDR', None) and
+            getattr(config, 'LUTRON2_BOND_MAPPING', None)
+    ):
         for lutron_id, subconfig in config.LUTRON2_BOND_MAPPING.items():
             logger.debug(
                 'Subscribing to %s:%s -> %s',
