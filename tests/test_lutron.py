@@ -396,3 +396,18 @@ def test_get_default_lutron_connection(mocker):
     lutron.get_default_lutron_connection()
 
     mock_get_connection.assert_called_with('10.0.0.3')
+
+
+def test_reset_connection_cache():
+    result1 = lutron.get_lutron_connection('10.0.0.1')
+    lutron.get_lutron_connection('10.0.0.2')
+
+    assert len(lutron.connections) == 2
+
+    lutron.reset_connection_cache()
+
+    assert len(lutron.connections) == 0
+
+    result2 = lutron.get_lutron_connection('10.0.0.1')
+
+    assert result1 is not result2

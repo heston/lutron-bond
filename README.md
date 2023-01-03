@@ -181,3 +181,8 @@ Run unit tests:
 ```bash
 pytest
 ```
+
+Generate a coverage report:
+```bash
+pytest --cov --cov-report=html
+```

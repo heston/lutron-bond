@@ -89,6 +89,60 @@ def test__add_listeners(mocker, logger, bus, bond_get_handler, import_config):
     bus.sub.assert_called_with('{}:{}'.format(env_config.LUTRON_BRIDGE_ADDR, 99), handler)
 
 
+def test__add_listeners__bridge2(mocker, logger, bus, bond_get_handler, import_config):
+    env_config = import_config()
+    config = {
+        99: {
+            'name': 'Light',
+            'bondID': 'a1b2c3d4',
+            'actions': {
+                'BTN_1': {
+                    'PRESS': 'TurnLightOn',
+                }
+            }
+        }
+    }
+
+    config2 = {
+        88: {
+            'name': 'Light2',
+            'bondID': 'a1b2c3d4',
+            'actions': {
+                'BTN_1': {
+                    'PRESS': 'TurnLightOn',
+                }
+            }
+        }
+    }
+    subconfig = config[99]
+    subconfig2 = config2[88]
+    mocker.patch('lutronbond.config.LUTRON_BOND_MAPPING', config)
+    mocker.patch('lutronbond.config.LUTRON2_BOND_MAPPING', config2)
+    handler = mocker.Mock()
+    bond_get_handler.return_value = handler
+
+    controller.add_listeners()
+
+    logger.debug.assert_has_calls([
+        mocker.call(
+            'Subscribing to %s:%s -> %s',
+            env_config.LUTRON_BRIDGE_ADDR, 99, subconfig
+        ),
+        mocker.call(
+            'Subscribing to %s:%s -> %s',
+            env_config.LUTRON_BRIDGE2_ADDR, 88, subconfig2
+        )
+    ])
+    bond_get_handler.assert_has_calls([
+        mocker.call(subconfig),
+        mocker.call(subconfig2)
+    ])
+    bus.sub.assert_has_calls([
+        mocker.call('{}:{}'.format(env_config.LUTRON_BRIDGE_ADDR, 99), handler),
+        mocker.call('{}:{}'.format(env_config.LUTRON_BRIDGE2_ADDR, 88), handler)
+    ])
+
+
 @pytest.mark.asyncio
 async def test__shutdown(mocker, amock, logger):
     get_connection = mocker.patch(
