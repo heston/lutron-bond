@@ -1,16 +1,4 @@
-import importlib
-
 import pytest
-
-
-@pytest.fixture
-def import_config():
-    def inner():
-        module = importlib.import_module('lutronbond.config')
-        importlib.reload(module)
-        return module
-
-    return inner
 
 
 def test_get_env__empty_default(import_config):
@@ -47,13 +35,13 @@ def test_get_env__set_default(import_config):
 
 def test_env__in_environment(env, import_config):
     env('LUTRON_BRIDGE_ADDR', '10.0.0.10')
-    env('BOND_BRIDGE_ADDR', '10.0.0.11')
+    env('BOND_BRIDGE_ADDR', '10.0.0.30')
     env('BOND_BRIDGE_API_TOKEN', 'asdfasdf')
 
     config = import_config()
 
     assert config.LUTRON_BRIDGE_ADDR == '10.0.0.10'
-    assert config.BOND_BRIDGE_ADDR == '10.0.0.11'
+    assert config.BOND_BRIDGE_ADDR == '10.0.0.30'
     assert config.BOND_BRIDGE_API_TOKEN == 'asdfasdf'
 
 

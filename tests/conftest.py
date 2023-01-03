@@ -1,3 +1,4 @@
+import importlib
 import os
 from unittest.mock import Mock
 
@@ -51,8 +52,19 @@ def env():
             os.environ[key] = value
 
 
+@pytest.fixture
+def import_config():
+    def inner():
+        module = importlib.import_module('lutronbond.config')
+        importlib.reload(module)
+        return module
+
+    return inner
+
+
 # Set some default environment variables for testing purposes. These can be
 # overridden with the `env` fixture on a per-test basis.
 os.environ['LB_LUTRON_BRIDGE_ADDR'] = '10.0.0.10'
-os.environ['LB_BOND_BRIDGE_ADDR'] = '10.0.0.11'
+os.environ['LB_LUTRON_BRIDGE2_ADDR'] = '10.0.0.20'
+os.environ['LB_BOND_BRIDGE_ADDR'] = '10.0.0.30'
 os.environ['LB_BOND_BRIDGE_API_TOKEN'] = 'asdfasdf'
