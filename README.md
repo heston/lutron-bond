@@ -108,6 +108,28 @@ python3 -m lutronbond.bond
 This will dump a lot of info in JSON format to stdout about the Bond Bridge.
 Reading this should provide the required IDs.
 
+# Use with Two Lutron Bridges
+
+Some larger homes may have more than 75 Caseta devices, the limit of what can be paired
+to a single bridge. While not officially suported by Lutron, many people have had success
+utilizing multiple bridges to work around this. This integration supports up to two bridges
+simulatneously (and theoretically more, but I don't have an immediate need for that).
+
+To use a second bridge, provide the following environment variable:
+
+```bash
+export LB_LUTRON_BRIDGE2_ADDR="<IP address of second Lutron bridge>"
+```
+
+In `config.py` specify an additional config for the second bridge, in this format:
+
+```python
+LUTRON2_BOND_MAPPING = {
+    # Format is identical to that in LUTRON_BOND_MAPPING,
+    # but use Integration IDs from the second Lutron bridge.
+}
+```
+
 # Reliability Tuning
 
 In real-world testing, sometimes requests to the Bond Bridge time out or
