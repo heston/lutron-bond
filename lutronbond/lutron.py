@@ -53,14 +53,16 @@ class LutronEvent:
             operation: Operation,
             device: int,
             component: Component,
-            action: Action):
+            action: Action,
+            bridge: str):
         self.operation = operation
         self.device = device
         self.component = component
         self.action = action
+        self.bridge = bridge
 
     @classmethod
-    def parse(cls, raw: bytes) -> LutronEvent:
+    def parse(cls, raw: bytes, bridge: str) -> LutronEvent:
         logger.debug('Parsing: %s', raw)
 
         # ~OUTPUT,16,2,3
@@ -93,24 +95,25 @@ class LutronEvent:
         except ValueError:
             action_enum = Action.UNKNOWN
 
-        return cls(operation_enum, device, component_enum, action_enum)
+        return cls(operation_enum, device, component_enum, action_enum, bridge)
 
     def __repr__(self) -> str:
         return (
             'LutronEvent('
-            'operation={}, device={}, component={}, action={}'
+            'operation={}, device={}, component={}, action={}, bridge={}'
             ')'.format(
-                self.operation, self.device, self.component, self.action
+                self.operation, self.device, self.component, self.action, self.bridge
             )
         )
 
     def __str__(self) -> str:
         return (
-            'LutronEvent({}:{} {}:{})'.format(
+            'LutronEvent({}:{} {}:{} {})'.format(
                 self.operation.name,
                 self.device,
                 self.component.name,
-                self.action.name
+                self.action.name,
+                self.bridge
             )
         )
 
@@ -205,7 +208,7 @@ class LutronConnection:
             logger.debug('Got data: %s', data)
 
             try:
-                evt = LutronEvent.parse(data)
+                evt = LutronEvent.parse(data, self.host)
             except ValueError as e:
                 logger.error('Error parsing event: %s', e)
                 continue
@@ -213,13 +216,23 @@ class LutronConnection:
                 await callback(evt)
 
 
+connections = []
+
+
 @functools.cache
 def get_lutron_connection(host: str) -> LutronConnection:
-    return LutronConnection(host, 23)
+    c = LutronConnection(host, 23)
+    connections.append(c)
+    return c
 
 
 def get_default_lutron_connection() -> LutronConnection:
     return get_lutron_connection(config.LUTRON_BRIDGE_ADDR)
+
+
+def reset_connection_cache() -> None:
+    connections.clear()
+    get_lutron_connection.cache_clear()
 
 
 async def main() -> None:
@@ -230,7 +243,6 @@ async def main() -> None:
         print(evt)
 
     await conn.stream(print_event)
-
 
 if __name__ == '__main__':
     asyncio.run(main())
