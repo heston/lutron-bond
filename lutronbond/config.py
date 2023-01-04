@@ -6,7 +6,7 @@ def get_env(name: str, default: str = '') -> str:
     try:
         result = os.environ[name]
     except KeyError:
-        if not len(default):
+        if default is not None and not len(default):
             raise RuntimeError(
                 f'Required configuration not found in environment: {name}. '
                 'Please set an environment variable with this name and try '
