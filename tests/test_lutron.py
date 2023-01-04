@@ -111,12 +111,14 @@ def test__LutronEvent__str():
 
     result = str(event)
 
-    assert "LutronEvent(OUTPUT:7 BTN_1:PRESS 10.0.0.1)" == result
+    assert "LutronEvent(BRIDGE:10.0.0.1 OUTPUT:7 BTN_1:PRESS)" == result
 
 
 @pytest.fixture
-def lutron_connection():
-    return lutron.LutronConnection('10.0.0.1', 23)
+def lutron_connection(mocker):
+    c = lutron.LutronConnection('10.0.0.1', 23)
+    c.logger = mocker.Mock()
+    return c
 
 
 def test__LutronConnection__init(lutron_connection):
@@ -191,21 +193,17 @@ async def test__LutronConnection__login__not_connected(lutron_connection):
 
 
 @pytest.mark.asyncio
-async def test__LutronConnection__login__already_logged_in(
-        logger,
-        connected_lutron_connection
-):
+async def test__LutronConnection__login__already_logged_in(connected_lutron_connection):
     connected_lutron_connection.is_logged_in = True
     result = await connected_lutron_connection.login()
 
     assert result is True
-    logger.debug.assert_called_with('Already logged in!')
+    connected_lutron_connection.logger.debug.assert_called_with('Already logged in!')
 
 
 @pytest.mark.asyncio
 async def test__LutronConnection__login__send_username(
         mocker,
-        logger,
         connected_lutron_connection
 ):
     connected_lutron_connection._reader.read.return_value = lutron.LOGIN_PROMPT
@@ -214,8 +212,8 @@ async def test__LutronConnection__login__send_username(
     assert result is False
     assert connected_lutron_connection.is_logged_in is False
 
-    logger.debug.assert_any_call('Starting login...')
-    logger.debug.assert_any_call('Sending username')
+    connected_lutron_connection.logger.debug.assert_any_call('Starting login...')
+    connected_lutron_connection.logger.debug.assert_any_call('Sending username')
 
     connected_lutron_connection._writer.write.assert_has_calls([
         # Try 1
@@ -239,7 +237,6 @@ async def test__LutronConnection__login__send_username(
 @pytest.mark.asyncio
 async def test__LutronConnection__login__send_password(
         mocker,
-        logger,
         connected_lutron_connection
 ):
     connected_lutron_connection._reader.read.return_value = (
@@ -250,8 +247,8 @@ async def test__LutronConnection__login__send_password(
     assert result is False
     assert connected_lutron_connection.is_logged_in is False
 
-    logger.debug.assert_any_call('Starting login...')
-    logger.debug.assert_any_call('Sending password')
+    connected_lutron_connection.logger.debug.assert_any_call('Starting login...')
+    connected_lutron_connection.logger.debug.assert_any_call('Sending password')
 
     connected_lutron_connection._writer.write.assert_has_calls([
         # Try 1
@@ -273,11 +270,7 @@ async def test__LutronConnection__login__send_password(
 
 
 @pytest.mark.asyncio
-async def test__LutronConnection__login__ready(
-        mocker,
-        logger,
-        connected_lutron_connection
-):
+async def test__LutronConnection__login__ready(connected_lutron_connection):
     connected_lutron_connection._reader.read.return_value = (
         lutron.READY_PROMPT
     )
@@ -286,8 +279,8 @@ async def test__LutronConnection__login__ready(
     assert result is True
     assert connected_lutron_connection.is_logged_in is True
 
-    logger.debug.assert_any_call('Starting login...')
-    logger.debug.assert_any_call('Login successful!')
+    connected_lutron_connection.logger.debug.assert_any_call('Starting login...')
+    connected_lutron_connection.logger.debug.assert_any_call('Login successful!')
 
     assert not connected_lutron_connection._writer.write.called
 
@@ -313,7 +306,6 @@ def logged_in_lutron_connection(connected_lutron_connection):
 async def test__LutronConnection__stream__invalid_data(
         mocker,
         amock,
-        logger,
         logged_in_lutron_connection
 ):
     parse_mock = mocker.patch('lutronbond.lutron.LutronEvent.parse')
@@ -333,16 +325,21 @@ async def test__LutronConnection__stream__invalid_data(
     parse_mock.assert_called_with('Bogus data', BRIDGE_ADDR)
     assert not callback.called
 
-    logger.info.assert_called_with('Listening for events...')
-    logger.debug.assert_called_with('Got data: %s', 'Bogus data')
-    logger.error.assert_called_with('Error parsing event: %s', parse_error)
+    logged_in_lutron_connection.logger.info.assert_called_with(
+        'Listening for events...'
+    )
+    logged_in_lutron_connection.logger.debug.assert_called_with(
+        'Got data: %s', 'Bogus data'
+    )
+    logged_in_lutron_connection.logger.error.assert_called_with(
+        'Error parsing event: %s', parse_error
+    )
 
 
 @pytest.mark.asyncio
 async def test__LutronConnection__stream__valid_data(
         mocker,
         amock,
-        logger,
         logged_in_lutron_connection
 ):
     parse_mock = mocker.patch('lutronbond.lutron.LutronEvent.parse')
@@ -368,8 +365,12 @@ async def test__LutronConnection__stream__valid_data(
     parse_mock.assert_called_with('Bogus data', BRIDGE_ADDR)
     callback.assert_called_with(event)
 
-    logger.info.assert_called_with('Listening for events...')
-    logger.debug.assert_called_with('Got data: %s', 'Bogus data')
+    logged_in_lutron_connection.logger.info.assert_called_with(
+        'Listening for events...'
+    )
+    logged_in_lutron_connection.logger.debug.assert_called_with(
+        'Got data: %s', 'Bogus data'
+    )
 
 
 def test_get_lutron_connection():
