@@ -242,8 +242,6 @@ async def main() -> None:
         level=config.LOG_LEVEL
     )
 
-    connections: typing.List[LutronConnection] = []
-
     async def shutdown() -> None:
         for c in connections:
             await c.close()
@@ -258,16 +256,18 @@ async def main() -> None:
     async def print_event(evt: LutronEvent) -> None:
         print(evt)
 
-    connections.append(get_lutron_connection(config.LUTRON_BRIDGE_ADDR))
+    get_lutron_connection(config.LUTRON_BRIDGE_ADDR)
 
     if getattr(config, 'LUTRON_BRIDGE2_ADDR', None):
-        connections.append(get_lutron_connection(config.LUTRON_BRIDGE2_ADDR))
+        get_lutron_connection(config.LUTRON_BRIDGE2_ADDR)
 
     if all(await asyncio.gather(*[c.open() for c in connections])):
         try:
             await asyncio.gather(*[c.stream(print_event) for c in connections])
         except asyncio.exceptions.IncompleteReadError:
             pass
+
+    reset_connection_cache()
 
 
 if __name__ == '__main__':
