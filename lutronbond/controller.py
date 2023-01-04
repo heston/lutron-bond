@@ -86,14 +86,14 @@ async def start() -> None:
             if all(await asyncio.gather(*[c.open() for c in lutron.connections])):
                 await asyncio.gather(*[c.stream(handler) for c in lutron.connections])
             else:
-                return
+                break
         except asyncio.exceptions.IncompleteReadError:
             if not shutting_down:
                 logger.warning('Connection closed unexpectedly. Retrying...')
         finally:
-            cancel_bond_keepalive()
             await asyncio.gather(*[c.close() for c in lutron.connections])
 
+    cancel_bond_keepalive()
     lutron.reset_connection_cache()
 
 
