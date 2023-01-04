@@ -218,7 +218,7 @@ class LutronConnection:
                 await callback(evt)
 
 
-connections = []
+connections: typing.List[LutronConnection] = []
 
 
 @functools.cache
@@ -242,9 +242,9 @@ async def main() -> None:
         level=config.LOG_LEVEL
     )
 
-    connections = []
+    connections: typing.List[LutronConnection] = []
 
-    async def shutdown():
+    async def shutdown() -> None:
         for c in connections:
             await c.close()
         logger.info('Exiting...')
