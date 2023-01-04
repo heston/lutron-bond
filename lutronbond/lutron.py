@@ -3,6 +3,7 @@ import asyncio
 import enum
 import functools
 import logging
+import signal
 import typing
 
 from . import config
@@ -108,12 +109,12 @@ class LutronEvent:
 
     def __str__(self) -> str:
         return (
-            'LutronEvent({}:{} {}:{} {})'.format(
+            'LutronEvent(BRIDGE:{} {}:{} {}:{})'.format(
+                self.bridge,
                 self.operation.name,
                 self.device,
                 self.component.name,
-                self.action.name,
-                self.bridge
+                self.action.name
             )
         )
 
@@ -127,9 +128,10 @@ class LutronConnection:
         self.is_logged_in: bool = False
         self._reader: asyncio.StreamReader
         self._writer: asyncio.StreamWriter
+        self.logger = logger.getChild('LutronConnection<{}>'.format(self.host))
 
     async def connect(self) -> bool:
-        logger.debug(
+        self.logger.debug(
             'Establishing connection to Lutron bridge at %s:%s',
             self.host,
             self.port
@@ -140,17 +142,17 @@ class LutronConnection:
             self.port
         )
         self.is_connected = True
-        logger.info('Connected to Lutron Bridge')
+        self.logger.info('Connected to Lutron Bridge')
         return True
 
     async def close(self) -> bool:
         if not self.is_connected:
             return False
 
-        logger.info('Closing connection...')
+        self.logger.info('Closing connection...')
         self._writer.close()
         await self._writer.wait_closed()
-        logger.info('Connection closed')
+        self.logger.info('Connection closed')
         self.is_connected = False
         self.is_logged_in = False
         return True
@@ -160,37 +162,37 @@ class LutronConnection:
             raise RuntimeError('Socket not connected')
 
         if self.is_logged_in:
-            logger.debug('Already logged in!')
+            self.logger.debug('Already logged in!')
             return True
 
         tries = 5
-        logger.debug('Starting login...')
+        self.logger.debug('Starting login...')
 
         while not self.is_logged_in and tries:
             tries = tries - 1
             data = await self._reader.read(32)
 
             if data.startswith(LOGIN_PROMPT):
-                logger.debug('Sending username')
+                self.logger.debug('Sending username')
                 self._writer.write(USERNAME)
                 self._writer.write(LINE_TERM)
                 await self._writer.drain()
                 continue
 
             if data.startswith(PASSWORD_PROMPT):
-                logger.debug('Sending password')
+                self.logger.debug('Sending password')
                 self._writer.write(PASSWORD)
                 self._writer.write(LINE_TERM)
                 await self._writer.drain()
                 continue
 
             if data.startswith(READY_PROMPT):
-                logger.debug('Login successful!')
+                self.logger.debug('Login successful!')
                 self.is_logged_in = True
 
             return True
 
-        logger.error('Unable to log in')
+        self.logger.error('Unable to log in')
         return False
 
     async def open(self) -> bool:
@@ -201,16 +203,16 @@ class LutronConnection:
             self,
             callback: typing.Callable[[LutronEvent], typing.Awaitable[None]]
     ) -> None:
-        logger.info('Listening for events...')
+        self.logger.info('Listening for events...')
 
         while self.is_logged_in and self.is_connected:
             data = await self._reader.readuntil(LINE_TERM)
-            logger.debug('Got data: %s', data)
+            self.logger.debug('Got data: %s', data)
 
             try:
                 evt = LutronEvent.parse(data, self.host)
             except ValueError as e:
-                logger.error('Error parsing event: %s', e)
+                self.logger.error('Error parsing event: %s', e)
                 continue
             else:
                 await callback(evt)
@@ -236,13 +238,37 @@ def reset_connection_cache() -> None:
 
 
 async def main() -> None:
-    conn = get_lutron_connection(config.LUTRON_BRIDGE_ADDR)
-    await conn.open()
+    logging.basicConfig(
+        level=config.LOG_LEVEL
+    )
+
+    connections = []
+
+    async def shutdown():
+        for c in connections:
+            await c.close()
+        logger.info('Exiting...')
+
+    loop = asyncio.get_running_loop()
+    loop.add_signal_handler(
+        signal.SIGINT,
+        lambda: loop.create_task(shutdown())
+    )
 
     async def print_event(evt: LutronEvent) -> None:
         print(evt)
 
-    await conn.stream(print_event)
+    connections.append(get_lutron_connection(config.LUTRON_BRIDGE_ADDR))
+
+    if getattr(config, 'LUTRON_BRIDGE2_ADDR', None):
+        connections.append(get_lutron_connection(config.LUTRON_BRIDGE2_ADDR))
+
+    if all(await asyncio.gather(*[c.open() for c in connections])):
+        try:
+            await asyncio.gather(*[c.stream(print_event) for c in connections])
+        except asyncio.exceptions.IncompleteReadError:
+            pass
+
 
 if __name__ == '__main__':
     asyncio.run(main())
