@@ -8,11 +8,6 @@ from lutronbond import lutron
 BRIDGE_ADDR = '10.0.0.1'
 
 
-@pytest.fixture()
-def logger(mocker):
-    return mocker.patch('lutronbond.lutron.logger')
-
-
 def test__LutronEvent__init():
     event = lutron.LutronEvent(
         lutron.Operation.UNKNOWN,
