@@ -15,6 +15,24 @@ Connector between Lutron Caseta SmartBridge Pro and Bond Bridge.
 
 # Usage
 
+## Set Up Lutron Bridge
+
+Before proceeding, ensure that your Lutron bridge is listening for incoming connections:
+
+1. Open the Lutron app on your phone.
+1. Tap the gear icon in the upper left.
+1. Tap "Advanced" towards the bottom of the menu.
+1. Tap "Integration"
+1. Select the checkbox next to "Telnet Support"
+
+
+## Run Software
+
+This software must be running somewhere on your local network (with access to
+the Lutron and Bond hubs) in order for it to work. A Raspberry Pi, or other always-on
+computer is a good choice. However, how to deploy this is left as an exercise
+for the reader (look at [lutronbond.service](blob/main/lutronbond.service) for
+a starting place).
 
 ```bash
 python3 -m venv venv
@@ -35,10 +53,7 @@ export LB_BOND_BRIDGE_ADDR="<IP address of Bond Bridge>"
 export LB_BOND_BRIDGE_API_TOKEN="<Bond Bridge API token>"
 ```
 
-The software must be running somewhere on your local network (with access to
-both hubs) in order for it work (duh). A Raspberry Pi, or other always-on
-computer is a good choice. However, how to deploy this is left as an exercise
-for the reader.
+`run.sh` will look for this file and load it for you.
 
 
 # Configuration
@@ -108,6 +123,28 @@ python3 -m lutronbond.bond
 This will dump a lot of info in JSON format to stdout about the Bond Bridge.
 Reading this should provide the required IDs.
 
+# Use with Two Lutron Bridges
+
+Some larger homes may have more than 75 Caseta devices, the limit of what can be paired
+to a single bridge. While not officially suported by Lutron, many people have had success
+utilizing multiple bridges to work around this. This integration supports up to two bridges
+simulatneously (and theoretically more, but I don't have an immediate need for that).
+
+To use a second bridge, provide the following environment variable:
+
+```bash
+export LB_LUTRON_BRIDGE2_ADDR="<IP address of second Lutron bridge>"
+```
+
+In `config.py` specify an additional config for the second bridge, in this format:
+
+```python
+LUTRON2_BOND_MAPPING = {
+    # Format is identical to that in LUTRON_BOND_MAPPING,
+    # but use Integration IDs from the second Lutron bridge.
+}
+```
+
 # Reliability Tuning
 
 In real-world testing, sometimes requests to the Bond Bridge time out or
@@ -158,4 +195,9 @@ mypy -p lutronbond -p tests
 Run unit tests:
 ```bash
 pytest
+```
+
+Generate a coverage report:
+```bash
+pytest --cov --cov-report=html
 ```

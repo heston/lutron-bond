@@ -21,18 +21,35 @@ async def handler(lutron_event: lutron.LutronEvent) -> None:
     logger.info('Handling Lutron event: %s', lutron_event)
 
     await eventbus.get_bus().pub(
-        lutron_event.device,
+        '{}:{}'.format(lutron_event.bridge, lutron_event.device),
         lutron_event
     )
 
 
 def add_listeners() -> None:
     for lutron_id, subconfig in config.LUTRON_BOND_MAPPING.items():
-        logger.debug('Subscribing to %s: %s', lutron_id, subconfig)
+        logger.debug(
+            'Subscribing to %s:%s -> %s',
+            config.LUTRON_BRIDGE_ADDR, lutron_id, subconfig
+        )
         eventbus.get_bus().sub(
-            lutron_id,
+            '{}:{}'.format(config.LUTRON_BRIDGE_ADDR, lutron_id),
             bond.get_handler(subconfig)
         )
+
+    if (
+            getattr(config, 'LUTRON_BRIDGE2_ADDR', None) and
+            getattr(config, 'LUTRON2_BOND_MAPPING', None)
+    ):
+        for lutron_id, subconfig in config.LUTRON2_BOND_MAPPING.items():
+            logger.debug(
+                'Subscribing to %s:%s -> %s',
+                config.LUTRON_BRIDGE2_ADDR, lutron_id, subconfig
+            )
+            eventbus.get_bus().sub(
+                '{}:{}'.format(config.LUTRON_BRIDGE2_ADDR, lutron_id),
+                bond.get_handler(subconfig)
+            )
 
 
 shutting_down: bool = False
@@ -41,7 +58,8 @@ shutting_down: bool = False
 async def shutdown() -> None:
     global shutting_down
     shutting_down = True
-    await lutron.get_default_lutron_connection().close()
+    for c in lutron.connections:
+        await c.close()
     logger.info('Exiting...')
 
 
@@ -58,20 +76,25 @@ async def start() -> None:
 
     add_listeners()
 
-    c = lutron.get_default_lutron_connection()
+    lutron.get_default_lutron_connection()
+
+    if (getattr(config, 'LUTRON_BRIDGE2_ADDR', None)):
+        lutron.get_lutron_connection(config.LUTRON_BRIDGE2_ADDR)
 
     while not shutting_down:
         try:
-            if await c.open():
-                await c.stream(handler)
+            if all(await asyncio.gather(*[c.open() for c in lutron.connections])):
+                await asyncio.gather(*[c.stream(handler) for c in lutron.connections])
             else:
-                return
+                break
         except asyncio.exceptions.IncompleteReadError:
             if not shutting_down:
                 logger.warning('Connection closed unexpectedly. Retrying...')
         finally:
-            cancel_bond_keepalive()
-            await c.close()
+            await asyncio.gather(*[c.close() for c in lutron.connections])
+
+    cancel_bond_keepalive()
+    lutron.reset_connection_cache()
 
 
 if __name__ == '__main__':

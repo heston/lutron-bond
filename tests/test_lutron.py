@@ -5,10 +5,7 @@ import pytest_asyncio
 
 from lutronbond import lutron
 
-
-@pytest.fixture()
-def logger(mocker):
-    return mocker.patch('lutronbond.lutron.logger')
+BRIDGE_ADDR = '10.0.0.1'
 
 
 def test__LutronEvent__init():
@@ -16,33 +13,35 @@ def test__LutronEvent__init():
         lutron.Operation.UNKNOWN,
         -99,
         lutron.Component.UNKNOWN,
-        lutron.Action.UNKNOWN
+        lutron.Action.UNKNOWN,
+        BRIDGE_ADDR
     )
 
     assert event.operation is lutron.Operation.UNKNOWN
     assert event.device == -99
     assert event.component is lutron.Component.UNKNOWN
     assert event.action is lutron.Action.UNKNOWN
+    assert event.bridge == BRIDGE_ADDR
 
 
 def test__LutronEvent__parse__unrecognized_event():
     rawevent = b"o hai"
 
     with pytest.raises(ValueError):
-        lutron.LutronEvent.parse(rawevent)
+        lutron.LutronEvent.parse(rawevent, BRIDGE_ADDR)
 
 
 def test__LutronEvent__parse__invalid_event():
     rawevent = b"~OUTPUT,16,1"
 
     with pytest.raises(ValueError):
-        lutron.LutronEvent.parse(rawevent)
+        lutron.LutronEvent.parse(rawevent, BRIDGE_ADDR)
 
 
 def test__LutronEvent__parse__unknown_operation():
     rawevent = b"~WHOA,16,1,1"
 
-    result = lutron.LutronEvent.parse(rawevent)
+    result = lutron.LutronEvent.parse(rawevent, BRIDGE_ADDR)
 
     assert result.operation is lutron.Operation.UNKNOWN
 
@@ -50,7 +49,7 @@ def test__LutronEvent__parse__unknown_operation():
 def test__LutronEvent__parse__unknown_component():
     rawevent = b"~OUTPUT,16,9,1"
 
-    result = lutron.LutronEvent.parse(rawevent)
+    result = lutron.LutronEvent.parse(rawevent, BRIDGE_ADDR)
 
     assert result.component is lutron.Component.UNKNOWN
 
@@ -58,7 +57,7 @@ def test__LutronEvent__parse__unknown_component():
 def test__LutronEvent__parse__unknown_action():
     rawevent = b"~OUTPUT,16,1,10"
 
-    result = lutron.LutronEvent.parse(rawevent)
+    result = lutron.LutronEvent.parse(rawevent, BRIDGE_ADDR)
 
     assert result.action is lutron.Action.UNKNOWN
 
@@ -66,12 +65,13 @@ def test__LutronEvent__parse__unknown_action():
 def test__LutronEvent__parse__valid_event():
     rawevent = b"~OUTPUT,16,2,1"
 
-    result = lutron.LutronEvent.parse(rawevent)
+    result = lutron.LutronEvent.parse(rawevent, BRIDGE_ADDR)
 
     assert result.operation is lutron.Operation.OUTPUT
     assert result.device == 16
     assert result.component is lutron.Component.BTN_1
     assert result.action is lutron.Action.ENABLE
+    assert result.bridge == BRIDGE_ADDR
 
 
 def test__LutronEvent__repr():
@@ -79,7 +79,8 @@ def test__LutronEvent__repr():
         lutron.Operation.OUTPUT,
         7,
         lutron.Component.BTN_1,
-        lutron.Action.PRESS
+        lutron.Action.PRESS,
+        BRIDGE_ADDR
     )
 
     result = repr(event)
@@ -89,7 +90,8 @@ def test__LutronEvent__repr():
         "operation=Operation.OUTPUT, "
         "device=7, "
         "component=Component.BTN_1, "
-        "action=Action.PRESS)"
+        "action=Action.PRESS, "
+        "bridge=10.0.0.1)"
     ) == result
 
 
@@ -98,17 +100,20 @@ def test__LutronEvent__str():
         lutron.Operation.OUTPUT,
         7,
         lutron.Component.BTN_1,
-        lutron.Action.PRESS
+        lutron.Action.PRESS,
+        BRIDGE_ADDR
     )
 
     result = str(event)
 
-    assert "LutronEvent(OUTPUT:7 BTN_1:PRESS)" == result
+    assert "LutronEvent(BRIDGE:10.0.0.1 OUTPUT:7 BTN_1:PRESS)" == result
 
 
 @pytest.fixture
-def lutron_connection():
-    return lutron.LutronConnection('10.0.0.1', 23)
+def lutron_connection(mocker):
+    c = lutron.LutronConnection('10.0.0.1', 23)
+    c.logger = mocker.Mock()
+    return c
 
 
 def test__LutronConnection__init(lutron_connection):
@@ -183,21 +188,17 @@ async def test__LutronConnection__login__not_connected(lutron_connection):
 
 
 @pytest.mark.asyncio
-async def test__LutronConnection__login__already_logged_in(
-        logger,
-        connected_lutron_connection
-):
+async def test__LutronConnection__login__already_logged_in(connected_lutron_connection):
     connected_lutron_connection.is_logged_in = True
     result = await connected_lutron_connection.login()
 
     assert result is True
-    logger.debug.assert_called_with('Already logged in!')
+    connected_lutron_connection.logger.debug.assert_called_with('Already logged in!')
 
 
 @pytest.mark.asyncio
 async def test__LutronConnection__login__send_username(
         mocker,
-        logger,
         connected_lutron_connection
 ):
     connected_lutron_connection._reader.read.return_value = lutron.LOGIN_PROMPT
@@ -206,8 +207,8 @@ async def test__LutronConnection__login__send_username(
     assert result is False
     assert connected_lutron_connection.is_logged_in is False
 
-    logger.debug.assert_any_call('Starting login...')
-    logger.debug.assert_any_call('Sending username')
+    connected_lutron_connection.logger.debug.assert_any_call('Starting login...')
+    connected_lutron_connection.logger.debug.assert_any_call('Sending username')
 
     connected_lutron_connection._writer.write.assert_has_calls([
         # Try 1
@@ -231,7 +232,6 @@ async def test__LutronConnection__login__send_username(
 @pytest.mark.asyncio
 async def test__LutronConnection__login__send_password(
         mocker,
-        logger,
         connected_lutron_connection
 ):
     connected_lutron_connection._reader.read.return_value = (
@@ -242,8 +242,8 @@ async def test__LutronConnection__login__send_password(
     assert result is False
     assert connected_lutron_connection.is_logged_in is False
 
-    logger.debug.assert_any_call('Starting login...')
-    logger.debug.assert_any_call('Sending password')
+    connected_lutron_connection.logger.debug.assert_any_call('Starting login...')
+    connected_lutron_connection.logger.debug.assert_any_call('Sending password')
 
     connected_lutron_connection._writer.write.assert_has_calls([
         # Try 1
@@ -265,11 +265,7 @@ async def test__LutronConnection__login__send_password(
 
 
 @pytest.mark.asyncio
-async def test__LutronConnection__login__ready(
-        mocker,
-        logger,
-        connected_lutron_connection
-):
+async def test__LutronConnection__login__ready(connected_lutron_connection):
     connected_lutron_connection._reader.read.return_value = (
         lutron.READY_PROMPT
     )
@@ -278,8 +274,8 @@ async def test__LutronConnection__login__ready(
     assert result is True
     assert connected_lutron_connection.is_logged_in is True
 
-    logger.debug.assert_any_call('Starting login...')
-    logger.debug.assert_any_call('Login successful!')
+    connected_lutron_connection.logger.debug.assert_any_call('Starting login...')
+    connected_lutron_connection.logger.debug.assert_any_call('Login successful!')
 
     assert not connected_lutron_connection._writer.write.called
 
@@ -305,7 +301,6 @@ def logged_in_lutron_connection(connected_lutron_connection):
 async def test__LutronConnection__stream__invalid_data(
         mocker,
         amock,
-        logger,
         logged_in_lutron_connection
 ):
     parse_mock = mocker.patch('lutronbond.lutron.LutronEvent.parse')
@@ -322,19 +317,24 @@ async def test__LutronConnection__stream__invalid_data(
     with pytest.raises(asyncio.exceptions.IncompleteReadError):
         await logged_in_lutron_connection.stream(callback)
 
-    parse_mock.assert_called_with('Bogus data')
+    parse_mock.assert_called_with('Bogus data', BRIDGE_ADDR)
     assert not callback.called
 
-    logger.info.assert_called_with('Listening for events...')
-    logger.debug.assert_called_with('Got data: %s', 'Bogus data')
-    logger.error.assert_called_with('Error parsing event: %s', parse_error)
+    logged_in_lutron_connection.logger.info.assert_called_with(
+        'Listening for events...'
+    )
+    logged_in_lutron_connection.logger.debug.assert_called_with(
+        'Got data: %s', 'Bogus data'
+    )
+    logged_in_lutron_connection.logger.error.assert_called_with(
+        'Error parsing event: %s', parse_error
+    )
 
 
 @pytest.mark.asyncio
 async def test__LutronConnection__stream__valid_data(
         mocker,
         amock,
-        logger,
         logged_in_lutron_connection
 ):
     parse_mock = mocker.patch('lutronbond.lutron.LutronEvent.parse')
@@ -342,7 +342,8 @@ async def test__LutronConnection__stream__valid_data(
         lutron.Operation.OUTPUT,
         1,
         lutron.Component.BTN_1,
-        lutron.Action.PRESS
+        lutron.Action.PRESS,
+        BRIDGE_ADDR
     )
     parse_mock.return_value = event
 
@@ -356,11 +357,15 @@ async def test__LutronConnection__stream__valid_data(
     with pytest.raises(asyncio.exceptions.IncompleteReadError):
         await logged_in_lutron_connection.stream(callback)
 
-    parse_mock.assert_called_with('Bogus data')
+    parse_mock.assert_called_with('Bogus data', BRIDGE_ADDR)
     callback.assert_called_with(event)
 
-    logger.info.assert_called_with('Listening for events...')
-    logger.debug.assert_called_with('Got data: %s', 'Bogus data')
+    logged_in_lutron_connection.logger.info.assert_called_with(
+        'Listening for events...'
+    )
+    logged_in_lutron_connection.logger.debug.assert_called_with(
+        'Got data: %s', 'Bogus data'
+    )
 
 
 def test_get_lutron_connection():
@@ -368,6 +373,7 @@ def test_get_lutron_connection():
     result2 = lutron.get_lutron_connection('10.0.0.1')
 
     assert result1 is result2
+    assert len(lutron.connections) == 1
 
 
 def test_get_lutron_connection__different():
@@ -375,6 +381,7 @@ def test_get_lutron_connection__different():
     result2 = lutron.get_lutron_connection('10.0.0.2')
 
     assert result1 is not result2
+    assert len(lutron.connections) == 2
 
 
 def test_get_default_lutron_connection(mocker):
@@ -385,3 +392,18 @@ def test_get_default_lutron_connection(mocker):
     lutron.get_default_lutron_connection()
 
     mock_get_connection.assert_called_with('10.0.0.3')
+
+
+def test_reset_connection_cache():
+    result1 = lutron.get_lutron_connection('10.0.0.1')
+    lutron.get_lutron_connection('10.0.0.2')
+
+    assert len(lutron.connections) == 2
+
+    lutron.reset_connection_cache()
+
+    assert len(lutron.connections) == 0
+
+    result2 = lutron.get_lutron_connection('10.0.0.1')
+
+    assert result1 is not result2

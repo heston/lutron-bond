@@ -23,13 +23,20 @@ def bond_get_handler(mocker):
     return mocker.patch('lutronbond.bond.get_handler')
 
 
+@pytest.fixture(autouse=True)
+def reset_lutron_connections():
+    lutron.reset_connection_cache()
+
+
 @pytest.mark.asyncio
-async def test__handler__invalid_operation(logger):
+async def test__handler__invalid_operation(import_config, logger):
+    config = import_config()
     event = lutron.LutronEvent(
         lutron.Operation.UNKNOWN,
         99,
         lutron.Component.BTN_1,
-        lutron.Action.ENABLE
+        lutron.Action.ENABLE,
+        config.LUTRON_BRIDGE_ADDR
     )
 
     await controller.handler(event)
@@ -38,21 +45,24 @@ async def test__handler__invalid_operation(logger):
 
 
 @pytest.mark.asyncio
-async def test__handler__valid_operation(logger, bus):
+async def test__handler__valid_operation(import_config, logger, bus):
+    config = import_config()
     event = lutron.LutronEvent(
         lutron.Operation.DEVICE,
         99,
         lutron.Component.BTN_1,
-        lutron.Action.PRESS
+        lutron.Action.PRESS,
+        config.LUTRON_BRIDGE_ADDR
     )
 
     await controller.handler(event)
 
     logger.info.assert_called_with('Handling Lutron event: %s', event)
-    bus.pub.assert_called_with(99, event)
+    bus.pub.assert_called_with('{}:{}'.format(config.LUTRON_BRIDGE_ADDR, 99), event)
 
 
-def test__add_listeners(mocker, logger, bus, bond_get_handler):
+def test__add_listeners(mocker, logger, bus, bond_get_handler, import_config):
+    env_config = import_config()
     config = {
         99: {
             'name': 'Light',
@@ -71,24 +81,85 @@ def test__add_listeners(mocker, logger, bus, bond_get_handler):
 
     controller.add_listeners()
 
-    logger.debug.assert_called_with('Subscribing to %s: %s', 99, subconfig)
+    logger.debug.assert_called_with(
+        'Subscribing to %s:%s -> %s',
+        env_config.LUTRON_BRIDGE_ADDR, 99, subconfig
+    )
     bond_get_handler.assert_called_with(subconfig)
-    bus.sub.assert_called_with(99, handler)
+    bus.sub.assert_called_with('{}:{}'.format(env_config.LUTRON_BRIDGE_ADDR, 99), handler)
+
+
+def test__add_listeners__bridge2(mocker, logger, bus, bond_get_handler, import_config):
+    env_config = import_config()
+    config = {
+        99: {
+            'name': 'Light',
+            'bondID': 'a1b2c3d4',
+            'actions': {
+                'BTN_1': {
+                    'PRESS': 'TurnLightOn',
+                }
+            }
+        }
+    }
+
+    config2 = {
+        88: {
+            'name': 'Light2',
+            'bondID': 'a1b2c3d4',
+            'actions': {
+                'BTN_1': {
+                    'PRESS': 'TurnLightOn',
+                }
+            }
+        }
+    }
+    subconfig = config[99]
+    subconfig2 = config2[88]
+    mocker.patch('lutronbond.config.LUTRON_BOND_MAPPING', config)
+    mocker.patch('lutronbond.config.LUTRON2_BOND_MAPPING', config2)
+    handler = mocker.Mock()
+    bond_get_handler.return_value = handler
+
+    controller.add_listeners()
+
+    logger.debug.assert_has_calls([
+        mocker.call(
+            'Subscribing to %s:%s -> %s',
+            env_config.LUTRON_BRIDGE_ADDR, 99, subconfig
+        ),
+        mocker.call(
+            'Subscribing to %s:%s -> %s',
+            env_config.LUTRON_BRIDGE2_ADDR, 88, subconfig2
+        )
+    ])
+    bond_get_handler.assert_has_calls([
+        mocker.call(subconfig),
+        mocker.call(subconfig2)
+    ])
+    bus.sub.assert_has_calls([
+        mocker.call('{}:{}'.format(env_config.LUTRON_BRIDGE_ADDR, 99), handler),
+        mocker.call('{}:{}'.format(env_config.LUTRON_BRIDGE2_ADDR, 88), handler)
+    ])
 
 
 @pytest.mark.asyncio
 async def test__shutdown(mocker, amock, logger):
     get_connection = mocker.patch(
-        'lutronbond.lutron.get_default_lutron_connection'
+        'lutronbond.lutron.LutronConnection'
     )
     get_connection.return_value.close = amock()
+
+    lutron.get_lutron_connection('a')
+    lutron.get_lutron_connection('b')
 
     assert controller.shutting_down is False
 
     await controller.shutdown()
 
     assert controller.shutting_down is True
-    assert get_connection.return_value.close.called
+    assert len(lutron.connections) == 2
+    assert all(c.close.called for c in lutron.connections)
     logger.info.assert_called_with('Exiting...')
 
     controller.shutting_down = False
@@ -104,16 +175,16 @@ async def test__start(mocker, logger, amock):
     keepalive = mocker.patch('lutronbond.bond.keepalive')
     mocker.patch('lutronbond.controller.add_listeners')
     lutron_connection = mocker.patch(
-        'lutronbond.lutron.get_default_lutron_connection'
+        'lutronbond.lutron.LutronConnection'
     ).return_value
-    lutron_connection.open = amock()
+    lutron_connection.open = amock(return_value=True)
     lutron_connection.stream = amock()
+    lutron_connection.close = amock()
 
     def fake_shutdown(*args):
         controller.shutting_down = True
 
     lutron_connection.stream.side_effect = fake_shutdown
-    lutron_connection.close = amock()
 
     await controller.start()
 
@@ -136,10 +207,9 @@ async def test__start__cannot_open(mocker, logger, amock):
     keepalive = mocker.patch('lutronbond.bond.keepalive')
     mocker.patch('lutronbond.controller.add_listeners')
     lutron_connection = mocker.patch(
-        'lutronbond.lutron.get_default_lutron_connection'
+        'lutronbond.lutron.LutronConnection'
     ).return_value
-    lutron_connection.open = amock()
-    lutron_connection.open.return_value = False
+    lutron_connection.open = amock(return_value=False)
     lutron_connection.close = amock()
     lutron_connection.stream = amock()
 
@@ -160,17 +230,22 @@ async def test__start__read_error(mocker, logger, amock):
     mocker.patch('lutronbond.bond.keepalive')
     mocker.patch('lutronbond.controller.add_listeners')
     lutron_connection = mocker.patch(
-        'lutronbond.lutron.get_default_lutron_connection'
+        'lutronbond.lutron.LutronConnection'
     ).return_value
-    lutron_connection.open = amock()
-    lutron_connection.stream = amock()
+    lutron_connection.open = amock(return_value=True)
 
     def handler():
+        # Connection 1 stream raises read error
         yield asyncio.exceptions.IncompleteReadError(b'', 32)
+        # Connection 2 stream returns normally
+        yield
         controller.shutting_down = True
-        yield True
+        # Connection 1 stream returns normally
+        yield
+        # Connection 2 stream returns normally
+        yield
 
-    lutron_connection.stream.side_effect = handler()
+    lutron_connection.stream = amock(side_effect=handler())
     lutron_connection.close = amock()
 
     await controller.start()
