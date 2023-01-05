@@ -78,7 +78,7 @@ async def start() -> None:
 
     lutron.get_default_lutron_connection()
 
-    if (config.LUTRON_BRIDGE2_ADDR):
+    if (getattr(config, 'LUTRON_BRIDGE2_ADDR', None)):
         lutron.get_lutron_connection(config.LUTRON_BRIDGE2_ADDR)
 
     while not shutting_down:

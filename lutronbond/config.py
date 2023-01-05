@@ -1,5 +1,5 @@
 import os
-from typing import Dict, Optional
+from typing import Dict
 
 
 def get_env(name: str, default: str = '') -> str:
@@ -18,10 +18,12 @@ def get_env(name: str, default: str = '') -> str:
 
 
 LUTRON_BRIDGE_ADDR = get_env('LB_LUTRON_BRIDGE_ADDR')
+
 try:
-    LUTRON_BRIDGE2_ADDR: Optional[str] = get_env('LB_LUTRON_BRIDGE2_ADDR')
+    LUTRON_BRIDGE2_ADDR = get_env('LB_LUTRON_BRIDGE2_ADDR')
 except ValueError:
-    LUTRON_BRIDGE2_ADDR = None
+    pass
+
 BOND_BRIDGE_ADDR = get_env('LB_BOND_BRIDGE_ADDR')
 BOND_BRIDGE_API_TOKEN = get_env('LB_BOND_BRIDGE_API_TOKEN')
 
