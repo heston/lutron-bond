@@ -4,7 +4,7 @@ import pytest
 def test_get_env__empty_default(import_config):
     config = import_config()
 
-    with pytest.raises(RuntimeError) as e:
+    with pytest.raises(ValueError) as e:
         config.get_env('MY_ENV_VAR')
 
     assert str(e.value) == (
@@ -17,7 +17,7 @@ def test_get_env__empty_default(import_config):
 def test_get_env__empty_str_default(import_config):
     config = import_config()
 
-    with pytest.raises(RuntimeError) as e:
+    with pytest.raises(ValueError) as e:
         config.get_env('MY_ENV_VAR', '')
 
     assert str(e.value) == (
@@ -48,7 +48,7 @@ def test_env__in_environment(env, import_config):
 def test_env__not_in_environment(env, import_config):
     env('LB_BOND_BRIDGE_API_TOKEN', None)
 
-    with pytest.raises(RuntimeError) as e:
+    with pytest.raises(ValueError) as e:
         import_config()
 
     assert str(e.value) == (

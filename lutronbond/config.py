@@ -1,13 +1,13 @@
 import os
-from typing import Dict
+from typing import Dict, Optional
 
 
 def get_env(name: str, default: str = '') -> str:
     try:
         result = os.environ[name]
     except KeyError:
-        if default is not None and not len(default):
-            raise RuntimeError(
+        if not len(default):
+            raise ValueError(
                 f'Required configuration not found in environment: {name}. '
                 'Please set an environment variable with this name and try '
                 'again.'
@@ -18,7 +18,10 @@ def get_env(name: str, default: str = '') -> str:
 
 
 LUTRON_BRIDGE_ADDR = get_env('LB_LUTRON_BRIDGE_ADDR')
-LUTRON_BRIDGE2_ADDR = get_env('LB_LUTRON_BRIDGE2_ADDR', None)
+try:
+    LUTRON_BRIDGE2_ADDR: Optional[str] = get_env('LB_LUTRON_BRIDGE2_ADDR')
+except ValueError:
+    LUTRON_BRIDGE2_ADDR = None
 BOND_BRIDGE_ADDR = get_env('LB_BOND_BRIDGE_ADDR')
 BOND_BRIDGE_API_TOKEN = get_env('LB_BOND_BRIDGE_API_TOKEN')
 
