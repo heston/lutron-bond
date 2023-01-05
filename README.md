@@ -15,6 +15,24 @@ Connector between Lutron Caseta SmartBridge Pro and Bond Bridge.
 
 # Usage
 
+## Set Up Lutron Bridge
+
+Before proceeding, ensure that your Lutron bridge is listening for incoming connections:
+
+1. Open the Lutron app on your phone.
+1. Tap the gear icon in the upper left.
+1. Tap "Advanced" towards the bottom of the menu.
+1. Tap "Integration"
+1. Select the checkbox next to "Telnet Support"
+
+
+## Run Software
+
+This software must be running somewhere on your local network (with access to
+the Lutron and Bond hubs) in order for it work. A Raspberry Pi, or other always-on
+computer is a good choice. However, how to deploy this is left as an exercise
+for the reader (look at [lutronbond.service](blob/main/lutronbond.service) for
+a starting place).
 
 ```bash
 python3 -m venv venv
@@ -35,10 +53,7 @@ export LB_BOND_BRIDGE_ADDR="<IP address of Bond Bridge>"
 export LB_BOND_BRIDGE_API_TOKEN="<Bond Bridge API token>"
 ```
 
-The software must be running somewhere on your local network (with access to
-both hubs) in order for it work (duh). A Raspberry Pi, or other always-on
-computer is a good choice. However, how to deploy this is left as an exercise
-for the reader.
+`run.sh` will look for this file and load it for you.
 
 
 # Configuration
