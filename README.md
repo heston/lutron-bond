@@ -29,7 +29,7 @@ Before proceeding, ensure that your Lutron bridge is listening for incoming conn
 ## Run Software
 
 This software must be running somewhere on your local network (with access to
-the Lutron and Bond hubs) in order for it work. A Raspberry Pi, or other always-on
+the Lutron and Bond hubs) in order for it to work. A Raspberry Pi, or other always-on
 computer is a good choice. However, how to deploy this is left as an exercise
 for the reader (look at [lutronbond.service](blob/main/lutronbond.service) for
 a starting place).
