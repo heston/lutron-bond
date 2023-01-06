@@ -164,8 +164,9 @@ async def test_get_handler__dict_action(
         mock_bond_action.return_value
     )
     logger.info.assert_called_with(
-        '%s request sent to Bond Bridge %s',
+        '%s for %s request sent to Bond Bridge %s',
         'Hi',
+        'Unnamed',
         'bondid'
     )
     assert result is True
