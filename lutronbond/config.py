@@ -134,5 +134,23 @@ LUTRON_BOND_MAPPING: Dict[int, Dict] = {
 }
 
 LUTRON2_BOND_MAPPING: Dict[int, Dict] = {
-
+    58: {
+        'name': 'Heated Outdoor Chairs',
+        'tuya': {
+            'id': 'ebfe2b76f486db7b067lvm',
+            'localKey': 'b073d73bea4f94f5',
+            'addr': '192.168.1.195',
+            'version': 3.3
+        },
+        'actions': {
+            'BTN_1': {
+                'PRESS': 'TurnOn',
+                'RELEASE': None,
+            },
+            'BTN_2': {
+                'PRESS': 'TurnOff',
+                'RELEASE': None
+            },
+        }
+    }
 }
