@@ -147,7 +147,7 @@ LUTRON2_BOND_MAPPING: Dict[int, Dict] = {
                 'PRESS': 'TurnOn',
                 'RELEASE': None,
             },
-            'BTN_2': {
+            'BTN_3': {
                 'PRESS': 'TurnOff',
                 'RELEASE': None
             },
