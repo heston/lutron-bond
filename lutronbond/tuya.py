@@ -20,7 +20,7 @@ def get_handler(
 
     async def handler(event: lutron.LutronEvent) -> bool:
         actions = configmap['actions']
-        tuya_config = actions['tuya']
+        tuya_config = configmap['tuya']
 
         try:
             device = tinytuya.OutletDevice(
