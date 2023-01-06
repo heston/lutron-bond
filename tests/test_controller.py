@@ -76,6 +76,7 @@ def test__add_listeners(mocker, logger, bus, bond_get_handler, import_config):
     }
     subconfig = config[99]
     mocker.patch('lutronbond.config.LUTRON_BOND_MAPPING', config)
+    mocker.patch('lutronbond.config.LUTRON2_BOND_MAPPING', {})
     handler = mocker.Mock()
     bond_get_handler.return_value = handler
 

@@ -28,7 +28,7 @@ async def handler(lutron_event: lutron.LutronEvent) -> None:
     )
 
 
-def add_listeners_inner(bridge_addr: str, config_map: typing.Dict) -> None:
+def add_listeners_for_bridge(bridge_addr: str, config_map: typing.Dict) -> None:
     for lutron_id, subconfig in config_map.items():
         logger.debug(
             'Subscribing to %s:%s -> %s',
@@ -49,13 +49,13 @@ def add_listeners_inner(bridge_addr: str, config_map: typing.Dict) -> None:
 
 
 def add_listeners() -> None:
-    add_listeners_inner(config.LUTRON_BRIDGE_ADDR, config.LUTRON_BOND_MAPPING)
+    add_listeners_for_bridge(config.LUTRON_BRIDGE_ADDR, config.LUTRON_BOND_MAPPING)
 
     if (
             getattr(config, 'LUTRON_BRIDGE2_ADDR', None) and
             getattr(config, 'LUTRON2_BOND_MAPPING', None)
     ):
-        add_listeners_inner(config.LUTRON_BRIDGE2_ADDR, config.LUTRON2_BOND_MAPPING)
+        add_listeners_for_bridge(config.LUTRON_BRIDGE2_ADDR, config.LUTRON2_BOND_MAPPING)
 
 
 shutting_down: bool = False
