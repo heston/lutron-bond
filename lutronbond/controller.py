@@ -34,7 +34,7 @@ def add_listeners_inner(bridge_addr: str, config_map: typing.Dict) -> None:
             'Subscribing to %s:%s -> %s',
             bridge_addr, lutron_id, subconfig
         )
-        if 'bondId' in subconfig:
+        if 'bondID' in subconfig:
             handler = bond.get_handler(subconfig)
         elif 'tuya' in subconfig:
             handler = tuya.get_handler(subconfig)
