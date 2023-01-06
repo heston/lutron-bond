@@ -62,9 +62,10 @@ def get_handler(
         )
         method()
         logger.info(
-            '%s request sent to Tuya device %s',
+            '%s request sent to Tuya device %s ()',
             action,
-            tuya_config['id']
+            tuya_config['id'],
+            configmap.get('name', 'Unnamed')
         )
         return True
 

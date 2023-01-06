@@ -79,8 +79,9 @@ def get_handler(
                 bond_action
             )
             logger.info(
-                '%s request sent to Bond Bridge %s',
+                '%s for %s request sent to Bond Bridge %s',
                 action,
+                configmap.get('name', 'Unnamed'),
                 configmap['bondID']
             )
             return True
