@@ -41,12 +41,20 @@ def get_handler(
 
         try:
             action = component[event.action.name]
-            method_name = ACTIONS[action]
-            method = getattr(device, method_name)
         except KeyError:
             logger.warning('Unknown action: %s', event.action)
             return False
 
+        if action is None:
+            return False
+
+        try:
+            method_name = ACTIONS[action]
+        except KeyError:
+            logger.warning('Unknown action: %s', action)
+            return False
+
+        method = getattr(device, method_name)
         logger.debug(
             'Starting %s request to Tuya device %s',
             action,
