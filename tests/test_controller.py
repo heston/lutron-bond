@@ -99,7 +99,8 @@ def test__add_bond_listener(
     bus.sub.assert_called_with('{}:{}'.format(env_config.LUTRON_BRIDGE_ADDR, 99), handler)
 
 
-def test__add_bond_listeners__bridge2(mocker, logger, bus, bond_get_handler, import_config):
+def test__add_bond_listeners__bridge2(
+        mocker, logger, bus, bond_get_handler, import_config):
     env_config = import_config()
     config = {
         99: {
