@@ -1,11 +1,13 @@
 import asyncio
 import logging
 import signal
+import typing
 
 from . import bond
 from . import config
 from . import eventbus
 from . import lutron
+from . import tuya
 
 
 EVENT_OPERATION: lutron.Operation = lutron.Operation.DEVICE
@@ -26,30 +28,30 @@ async def handler(lutron_event: lutron.LutronEvent) -> None:
     )
 
 
-def add_listeners() -> None:
-    for lutron_id, subconfig in config.LUTRON_BOND_MAPPING.items():
+def add_listeners_for_bridge(bridge_addr: str, config_map: typing.Dict) -> None:
+    for lutron_id, subconfig in config_map.items():
         logger.debug(
             'Subscribing to %s:%s -> %s',
-            config.LUTRON_BRIDGE_ADDR, lutron_id, subconfig
+            bridge_addr, lutron_id, subconfig
         )
-        eventbus.get_bus().sub(
-            '{}:{}'.format(config.LUTRON_BRIDGE_ADDR, lutron_id),
-            bond.get_handler(subconfig)
-        )
+
+        key = '{}:{}'.format(bridge_addr, lutron_id)
+
+        if 'bond' in subconfig:
+            eventbus.get_bus().sub(key, bond.get_handler(subconfig))
+
+        if 'tuya' in subconfig:
+            eventbus.get_bus().sub(key, tuya.get_handler(subconfig))
+
+
+def add_listeners() -> None:
+    add_listeners_for_bridge(config.LUTRON_BRIDGE_ADDR, config.LUTRON_MAPPING)
 
     if (
             getattr(config, 'LUTRON_BRIDGE2_ADDR', None) and
-            getattr(config, 'LUTRON2_BOND_MAPPING', None)
+            getattr(config, 'LUTRON2_MAPPING', None)
     ):
-        for lutron_id, subconfig in config.LUTRON2_BOND_MAPPING.items():
-            logger.debug(
-                'Subscribing to %s:%s -> %s',
-                config.LUTRON_BRIDGE2_ADDR, lutron_id, subconfig
-            )
-            eventbus.get_bus().sub(
-                '{}:{}'.format(config.LUTRON_BRIDGE2_ADDR, lutron_id),
-                bond.get_handler(subconfig)
-            )
+        add_listeners_for_bridge(config.LUTRON_BRIDGE2_ADDR, config.LUTRON2_MAPPING)
 
 
 shutting_down: bool = False
