@@ -4,7 +4,7 @@
 [![flake8](https://github.com/heston/lutron-bond/actions/workflows/flake8.yml/badge.svg)](https://github.com/heston/lutron-bond/actions/workflows/flake8.yml)
 [![mypy](https://github.com/heston/lutron-bond/actions/workflows/mypy.yml/badge.svg)](https://github.com/heston/lutron-bond/actions/workflows/mypy.yml)
 
-Connector between Lutron Caseta SmartBridge Pro and Bond Bridge and/or Tuya Device.
+Connector between Lutron Caseta SmartBridge Pro and Bond Bridge and/or Tuya Devices.
 
 # Requirements
 
@@ -105,9 +105,9 @@ To trigger a Tuya action:
 ```python
 LUTRON_MAPPING = {
     21: {  # <-- This number is the Lutron Integration ID
-        'name': 'Fan Light',  # This is technically optional, but helps readability
+        'name': 'Smart Switch 1',  # Optional, but helps readability
         'tuya': {
-            'id': 'ebfe2b76f486db7b067lvm',  # The ID of the Tuya device
+            'id': 'ebfe2b76f486db7b067lvm',  # The ID of the Tuya device (see docs below)
             'localKey': 'b073d73bea4f94f5',  # See docs below
             'addr': '192.168.1.195',  # IP address of Tuya device on local network
             'version': 3.3,  # See docs below
@@ -166,14 +166,14 @@ Reading this should provide the required IDs.
 ## To figure out Tuya connection details
 
 This bridge communicates with Tuya devices over the local network, requiring
-no Internet connection to work. Getting the appropriate connection details is
-somewhat involved.
+no Internet connection. Getting the appropriate connection details is somewhat
+involved, though.
 
 This bridge relies on [tinytuya](https://github.com/jasonacox/tinytuya) for
-TuyaCloud support, and only implements support for smart switches at the
-moment.
+TuyaCloud support. Please see [the TinyTuya Docs](https://github.com/jasonacox/tinytuya#setup-wizard---getting-local-keys) for detailed set up instructions.
 
-Please see [the TinyTuya Docs](https://github.com/jasonacox/tinytuya#setup-wizard---getting-local-keys) for detailed set up instructions.
+At this time, only support for smart switches is provided. As such, only the
+actions `TurnOn` and `TurnOff` are implemented.
 
 
 # Use with Two Lutron Bridges
