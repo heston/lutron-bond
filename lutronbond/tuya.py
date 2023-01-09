@@ -19,7 +19,6 @@ def get_handler(
 ) -> typing.Callable[[lutron.LutronEvent], typing.Awaitable[bool]]:
 
     async def handler(event: lutron.LutronEvent) -> bool:
-        actions = configmap['actions']
         tuya_config = configmap['tuya']
 
         try:
@@ -32,6 +31,8 @@ def get_handler(
         except KeyError:
             logger.error('Invalid Tuya device: %s', tuya_config)
             return False
+
+        actions = tuya_config['actions']
 
         try:
             component = actions[event.component.name]

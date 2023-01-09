@@ -34,28 +34,24 @@ def add_listeners_for_bridge(bridge_addr: str, config_map: typing.Dict) -> None:
             'Subscribing to %s:%s -> %s',
             bridge_addr, lutron_id, subconfig
         )
-        if 'bondID' in subconfig:
-            handler = bond.get_handler(subconfig)
-        elif 'tuya' in subconfig:
-            handler = tuya.get_handler(subconfig)
-        else:
-            logger.warning('Unknown handler: %s', subconfig)
-            continue
 
-        eventbus.get_bus().sub(
-            '{}:{}'.format(bridge_addr, lutron_id),
-            handler
-        )
+        key = '{}:{}'.format(bridge_addr, lutron_id)
+
+        if 'bond' in subconfig:
+            eventbus.get_bus().sub(key, bond.get_handler(subconfig))
+
+        if 'tuya' in subconfig:
+            eventbus.get_bus().sub(key, tuya.get_handler(subconfig))
 
 
 def add_listeners() -> None:
-    add_listeners_for_bridge(config.LUTRON_BRIDGE_ADDR, config.LUTRON_BOND_MAPPING)
+    add_listeners_for_bridge(config.LUTRON_BRIDGE_ADDR, config.LUTRON_MAPPING)
 
     if (
             getattr(config, 'LUTRON_BRIDGE2_ADDR', None) and
-            getattr(config, 'LUTRON2_BOND_MAPPING', None)
+            getattr(config, 'LUTRON2_MAPPING', None)
     ):
-        add_listeners_for_bridge(config.LUTRON_BRIDGE2_ADDR, config.LUTRON2_BOND_MAPPING)
+        add_listeners_for_bridge(config.LUTRON_BRIDGE2_ADDR, config.LUTRON2_MAPPING)
 
 
 shutting_down: bool = False
