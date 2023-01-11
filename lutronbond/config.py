@@ -89,11 +89,23 @@ BOND_IDS = {
     'Guest Room': 'cb22812453dceb35',
 }
 
+SMART_SWITCH_ACTIONS = {
+    'BTN_1': {
+        'PRESS': 'TurnOn',
+        'RELEASE': None,
+    },
+    'BTN_3': {
+        'PRESS': 'TurnOff',
+        'RELEASE': None
+    },
+}
+
 LUTRON_MAPPING: Dict[int, Dict] = {
     # Lutron Integration ID->Bond/Tuya Device
     21: {
         'name': 'Master Bedroom Fan Light Pico',
         'bond': {
+            'name': 'Master Bedroom Fan Light',
             'id': BOND_IDS['Master Bedroom'],
             'actions': FAN_LIGHT_CONFIG,
         }
@@ -101,6 +113,7 @@ LUTRON_MAPPING: Dict[int, Dict] = {
     71: {
         'name': 'Master Bedroom Fan Pico',
         'bond': {
+            'name': 'Master Bedroom Fan',
             'id': BOND_IDS['Master Bedroom'],
             'actions': FAN_CONFIG,
         }
@@ -108,6 +121,7 @@ LUTRON_MAPPING: Dict[int, Dict] = {
     72: {
         'name': 'Living Room Fan Light Pico',
         'bond': {
+            'name': 'Living Room Fan Light',
             'id': BOND_IDS['Living Room'],
             'actions': FAN_LIGHT_CONFIG,
         }
@@ -115,6 +129,7 @@ LUTRON_MAPPING: Dict[int, Dict] = {
     8: {
         'name': 'Living Room Pico',
         'bond': {
+            'name': 'Living Room Fan Light',
             'id': BOND_IDS['Living Room'],
             'actions': FAN_LIGHT_CONFIG,
         }
@@ -122,6 +137,7 @@ LUTRON_MAPPING: Dict[int, Dict] = {
     63: {
         'name': 'Fireplace Pico',
         'bond': {
+            'name': 'Living Room Fan Light',
             'id': BOND_IDS['Living Room'],
             'actions': FAN_LIGHT_CONFIG,
         }
@@ -129,6 +145,7 @@ LUTRON_MAPPING: Dict[int, Dict] = {
     73: {
         'name': 'Living Room Fan Pico',
         'bond': {
+            'name': 'Living Room Fan',
             'id': BOND_IDS['Living Room'],
             'actions': FAN_CONFIG,
         }
@@ -136,6 +153,7 @@ LUTRON_MAPPING: Dict[int, Dict] = {
     29: {
         'name': 'Guest Room Fan Pico',
         'bond': {
+            'name': 'Guest Room Fan',
             'id': BOND_IDS['Guest Room'],
             'actions': FAN_CONFIG,
         }
@@ -143,30 +161,44 @@ LUTRON_MAPPING: Dict[int, Dict] = {
     75: {
         'name': 'Guest Room Fan Light Pico',
         'bond': {
+            'name': 'Guest Room Fan Light',
             'id': BOND_IDS['Guest Room'],
             'actions': FAN_LIGHT_CONFIG,
         }
+    },
+    00: {
+        'name': 'Office Video Light Pico',
+        'tuya': [
+            {
+                'name': 'Office Video Light Left',
+                'id': '06200623b4e62d1a231b',
+                'localKey': '58acbde7876e5a99',
+                'addr': '192.168.1.207',
+                'version': 3.1,
+                'actions': SMART_SWITCH_ACTIONS,
+            },
+            {
+                'name': 'Office Video Light Right',
+                'id': 'eb4665f27bcb082173imit',
+                'localKey': '898e3466b829d081',
+                'addr': '192.168.1.39',
+                'version': 3.3,
+                'actions': SMART_SWITCH_ACTIONS,
+            },
+        ],
     },
 }
 
 LUTRON2_MAPPING: Dict[int, Dict] = {
     58: {
-        'name': 'Heated Outdoor Chairs',
+        'name': 'Heated Outdoor Chair Pico',
         'tuya': {
+            'name': 'Heated Outdoor Chairs',
             'id': 'ebfe2b76f486db7b067lvm',
             'localKey': 'b073d73bea4f94f5',
             'addr': '192.168.1.195',
             'version': 3.3,
-            'actions': {
-                'BTN_1': {
-                    'PRESS': 'TurnOn',
-                    'RELEASE': None,
-                },
-                'BTN_3': {
-                    'PRESS': 'TurnOff',
-                    'RELEASE': None
-                },
-            }
-        }
-    }
+            'actions': SMART_SWITCH_ACTIONS,
+        },
+    },
 }

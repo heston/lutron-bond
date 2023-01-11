@@ -38,10 +38,18 @@ def add_listeners_for_bridge(bridge_addr: str, config_map: typing.Dict) -> None:
         key = '{}:{}'.format(bridge_addr, lutron_id)
 
         if 'bond' in subconfig:
-            eventbus.get_bus().sub(key, bond.get_handler(subconfig))
+            if type(subconfig['bond']) is list:
+                for config_item in subconfig['bond']:
+                    eventbus.get_bus().sub(key, bond.get_handler(config_item))
+            else:
+                eventbus.get_bus().sub(key, bond.get_handler(subconfig['bond']))
 
         if 'tuya' in subconfig:
-            eventbus.get_bus().sub(key, tuya.get_handler(subconfig))
+            if type(subconfig['tuya']) is list:
+                for config_item in subconfig['tuya']:
+                    eventbus.get_bus().sub(key, tuya.get_handler(config_item))
+            else:
+                eventbus.get_bus().sub(key, tuya.get_handler(subconfig['tuya']))
 
 
 def add_listeners() -> None:

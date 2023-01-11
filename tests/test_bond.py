@@ -64,19 +64,14 @@ def logger(mocker):
     return mocker.patch('lutronbond.bond.logger')
 
 
-def test_get_handler__missing_device(lutron_event):
+def test_get_handler__missing_actions(lutron_event):
     with pytest.raises(KeyError):
         bond.get_handler({})
 
 
-def test_get_handler__missing_actions(lutron_event):
-    with pytest.raises(KeyError):
-        bond.get_handler({'bond': {}})
-
-
 @pytest.mark.asyncio
 async def test_handler__unknown_component(lutron_event, logger):
-    handler = bond.get_handler({'bond': {'actions': {}}})
+    handler = bond.get_handler({'actions': {}})
 
     result = await handler(lutron_event)
 
@@ -90,7 +85,7 @@ async def test_handler__unknown_component(lutron_event, logger):
 
 @pytest.mark.asyncio
 async def test_handler__unknown_action(lutron_event, logger):
-    handler = bond.get_handler({'bond': {'actions': {'UNKNOWN': {}}}})
+    handler = bond.get_handler({'actions': {'UNKNOWN': {}}})
 
     result = await handler(lutron_event)
 
@@ -104,7 +99,7 @@ async def test_handler__unknown_action(lutron_event, logger):
 
 @pytest.mark.asyncio
 async def test_handler__none_action(lutron_event, logger):
-    handler = bond.get_handler({'bond': {'actions': {'UNKNOWN': {'UNKNOWN': None}}}})
+    handler = bond.get_handler({'actions': {'UNKNOWN': {'UNKNOWN': None}}})
 
     result = await handler(lutron_event)
 
@@ -133,10 +128,8 @@ async def test_handler__str_action(
         mock_bond_action,
         mock_default_bond_connection):
     handler = bond.get_handler({
-        'bond': {
-            'actions': {'UNKNOWN': {'UNKNOWN': 'Hi'}},
-            'id': 'bondid',
-        }
+        'actions': {'UNKNOWN': {'UNKNOWN': 'Hi'}},
+        'id': 'bondid',
     })
 
     result = await handler(lutron_event)
@@ -156,10 +149,8 @@ async def test_handler__dict_action(
         mock_bond_action,
         mock_default_bond_connection):
     handler = bond.get_handler({
-        'bond': {
-            'actions': {'UNKNOWN': {'UNKNOWN': {'Hi': 3}}},
-            'id': 'bondid',
-        }
+        'actions': {'UNKNOWN': {'UNKNOWN': {'Hi': 3}}},
+        'id': 'bondid',
     })
 
     result = await handler(lutron_event)
@@ -192,10 +183,8 @@ async def test_handler__retry_on_exception__failed(
         )
     )
     handler = bond.get_handler({
-        'bond': {
-            'actions': {'UNKNOWN': {'UNKNOWN': 'Hi'}},
-            'id': 'bondid',
-        }
+        'actions': {'UNKNOWN': {'UNKNOWN': 'Hi'}},
+        'id': 'bondid',
     })
 
     result = await handler(lutron_event)
@@ -230,10 +219,8 @@ async def test_handler__retry_on_exception__success(
     mock_default_bond_connection.action.side_effect = effect()
 
     handler = bond.get_handler({
-        'bond': {
-            'actions': {'UNKNOWN': {'UNKNOWN': 'Hi'}},
-            'id': 'bondid',
-        }
+        'actions': {'UNKNOWN': {'UNKNOWN': 'Hi'}},
+        'id': 'bondid',
     })
 
     result = await handler(lutron_event)
