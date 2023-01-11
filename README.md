@@ -169,8 +169,10 @@ This bridge communicates with Tuya devices over the local network, requiring
 no Internet connection. Getting the appropriate connection details is somewhat
 involved, though.
 
-This bridge relies on [tinytuya](https://github.com/jasonacox/tinytuya) for
-TuyaCloud support. Please see [the TinyTuya Docs](https://github.com/jasonacox/tinytuya#setup-wizard---getting-local-keys) for detailed set up instructions.
+We depend on [tinytuya](https://github.com/jasonacox/tinytuya) for TuyaCloud
+support. Please see [the TinyTuya Docs](https://github.com/jasonacox/tinytuya#setup-wizard---getting-local-keys) for detailed set up instructions. The
+TinyTuya Setup Wizard will provide all of the connection details needed
+to configure this bridge with your Tuya devices.
 
 At this time, only support for smart switches is provided. As such, only the
 actions `TurnOn` and `TurnOff` are implemented.
