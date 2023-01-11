@@ -89,50 +89,84 @@ BOND_IDS = {
     'Guest Room': 'cb22812453dceb35',
 }
 
-LUTRON_BOND_MAPPING: Dict[int, Dict] = {
-    # Lutron Integration ID->Bond Device
+LUTRON_MAPPING: Dict[int, Dict] = {
+    # Lutron Integration ID->Bond/Tuya Device
     21: {
-        'name': 'Master Bedroom Fan Light',
-        'bondID': BOND_IDS['Master Bedroom'],
-        'actions': FAN_LIGHT_CONFIG,
+        'name': 'Master Bedroom Fan Light Pico',
+        'bond': {
+            'id': BOND_IDS['Master Bedroom'],
+            'actions': FAN_LIGHT_CONFIG,
+        }
     },
     71: {
-        'name': 'Master Bedroom Fan',
-        'bondID': BOND_IDS['Master Bedroom'],
-        'actions': FAN_CONFIG,
+        'name': 'Master Bedroom Fan Pico',
+        'bond': {
+            'id': BOND_IDS['Master Bedroom'],
+            'actions': FAN_CONFIG,
+        }
     },
     72: {
-        'name': 'Living Room Fan Light',
-        'bondID': BOND_IDS['Living Room'],
-        'actions': FAN_LIGHT_CONFIG,
+        'name': 'Living Room Fan Light Pico',
+        'bond': {
+            'id': BOND_IDS['Living Room'],
+            'actions': FAN_LIGHT_CONFIG,
+        }
     },
     8: {
         'name': 'Living Room Pico',
-        'bondID': BOND_IDS['Living Room'],
-        'actions': FAN_LIGHT_CONFIG,
+        'bond': {
+            'id': BOND_IDS['Living Room'],
+            'actions': FAN_LIGHT_CONFIG,
+        }
     },
     63: {
         'name': 'Fireplace Pico',
-        'bondID': BOND_IDS['Living Room'],
-        'actions': FAN_LIGHT_CONFIG
+        'bond': {
+            'id': BOND_IDS['Living Room'],
+            'actions': FAN_LIGHT_CONFIG,
+        }
     },
     73: {
-        'name': 'Living Room Fan',
-        'bondID': BOND_IDS['Living Room'],
-        'actions': FAN_CONFIG,
+        'name': 'Living Room Fan Pico',
+        'bond': {
+            'id': BOND_IDS['Living Room'],
+            'actions': FAN_CONFIG,
+        }
     },
     29: {
-        'name': 'Guest Room Fan',
-        'bondID': BOND_IDS['Guest Room'],
-        'actions': FAN_CONFIG,
+        'name': 'Guest Room Fan Pico',
+        'bond': {
+            'id': BOND_IDS['Guest Room'],
+            'actions': FAN_CONFIG,
+        }
     },
     75: {
-        'name': 'Guest Room Fan Light',
-        'bondID': BOND_IDS['Guest Room'],
-        'actions': FAN_LIGHT_CONFIG,
+        'name': 'Guest Room Fan Light Pico',
+        'bond': {
+            'id': BOND_IDS['Guest Room'],
+            'actions': FAN_LIGHT_CONFIG,
+        }
     },
 }
 
-LUTRON2_BOND_MAPPING: Dict[int, Dict] = {
-
+LUTRON2_MAPPING: Dict[int, Dict] = {
+    58: {
+        'name': 'Heated Outdoor Chairs',
+        'tuya': {
+            'id': 'ebfe2b76f486db7b067lvm',
+            'localKey': 'b073d73bea4f94f5',
+            'addr': '192.168.1.195',
+            'version': 3.3,
+            'actions': {
+                'BTN_1': {
+                    'PRESS': 'TurnOn',
+                    'RELEASE': None,
+                },
+                'BTN_3': {
+                    'PRESS': 'TurnOff',
+                    'RELEASE': None
+                },
+            }
+        }
+    }
 }
