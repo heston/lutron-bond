@@ -19,20 +19,18 @@ def get_handler(
         configmap: dict
 ) -> typing.Callable[[lutron.LutronEvent], typing.Awaitable[bool]]:
 
-    tuya_config = configmap['tuya']
-
     try:
         device = tinytuya.OutletDevice(
-            dev_id=tuya_config['id'],
-            address=tuya_config['addr'],
-            local_key=tuya_config['localKey'],
-            version=tuya_config['version']
+            dev_id=configmap['id'],
+            address=configmap['addr'],
+            local_key=configmap['localKey'],
+            version=configmap['version']
         )
     except KeyError:
-        logger.error('Invalid Tuya device: %s', tuya_config)
+        logger.error('Invalid Tuya device: %s', configmap)
         raise
 
-    actions = tuya_config['actions']
+    actions = configmap['actions']
 
     async def handler(event: lutron.LutronEvent) -> bool:
         try:
@@ -63,7 +61,7 @@ def get_handler(
             logger.info(
                 '%s request sent to Tuya device %s (%s)',
                 action,
-                tuya_config['id'],
+                configmap['id'],
                 configmap.get('name', 'Unnamed')
             )
 
@@ -72,7 +70,7 @@ def get_handler(
         logger.debug(
             'Starting %s request to Tuya device %s',
             action,
-            tuya_config['id']
+            configmap['id']
         )
         return await asyncio.to_thread(do_action)
 

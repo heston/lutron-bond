@@ -94,9 +94,66 @@ def test__add_bond_listener(
         'Subscribing to %s:%s -> %s',
         env_config.LUTRON_BRIDGE_ADDR, 99, subconfig
     )
-    bond_get_handler.assert_called_with(subconfig)
+    bond_get_handler.assert_called_with(subconfig['bond'])
     assert not tuya_get_handler.called
     bus.sub.assert_called_with('{}:{}'.format(env_config.LUTRON_BRIDGE_ADDR, 99), handler)
+
+
+def test__add_bond_listener_list(
+        mocker, logger, bus, tuya_get_handler, bond_get_handler, import_config):
+    env_config = import_config()
+    config = {
+        99: {
+            'name': 'Light',
+            'bond': [
+                {
+                    'id': 'a1b2c3d4',
+                    'actions': {
+                        'BTN_1': {
+                            'PRESS': 'TurnLightOn',
+                        }
+                    }
+
+                },
+                {
+                    'id': 'e5f6g7h8',
+                    'actions': {
+                        'BTN_1': {
+                            'PRESS': 'TurnLightOn',
+                        }
+                    }
+
+                },
+            ],
+        }
+    }
+    subconfig = config[99]
+    mocker.patch('lutronbond.config.LUTRON_MAPPING', config)
+    mocker.patch('lutronbond.config.LUTRON2_MAPPING', {})
+    handler = mocker.Mock()
+    bond_get_handler.return_value = handler
+
+    controller.add_listeners()
+
+    logger.debug.assert_called_with(
+        'Subscribing to %s:%s -> %s',
+        env_config.LUTRON_BRIDGE_ADDR, 99, subconfig
+    )
+    bond_get_handler.assert_has_calls([
+        mocker.call(subconfig['bond'][0]),
+        mocker.call(subconfig['bond'][1]),
+    ])
+    assert not tuya_get_handler.called
+    bus.sub.assert_has_calls([
+        mocker.call(
+            '{}:{}'.format(env_config.LUTRON_BRIDGE_ADDR, 99),
+            handler
+        ),
+        mocker.call(
+            '{}:{}'.format(env_config.LUTRON_BRIDGE_ADDR, 99),
+            handler
+        )
+    ])
 
 
 def test__add_bond_listeners__bridge2(
@@ -149,8 +206,8 @@ def test__add_bond_listeners__bridge2(
         )
     ])
     bond_get_handler.assert_has_calls([
-        mocker.call(subconfig),
-        mocker.call(subconfig2)
+        mocker.call(subconfig['bond']),
+        mocker.call(subconfig2['bond'])
     ])
     bus.sub.assert_has_calls([
         mocker.call('{}:{}'.format(env_config.LUTRON_BRIDGE_ADDR, 99), handler),
@@ -189,9 +246,71 @@ def test__add_tuya_listener(
         'Subscribing to %s:%s -> %s',
         env_config.LUTRON_BRIDGE_ADDR, 99, subconfig
     )
-    tuya_get_handler.assert_called_with(subconfig)
+    tuya_get_handler.assert_called_with(subconfig['tuya'])
     assert not bond_get_handler.called
     bus.sub.assert_called_with('{}:{}'.format(env_config.LUTRON_BRIDGE_ADDR, 99), handler)
+
+
+def test__add_tuya_listener_list(
+        mocker, logger, bus, tuya_get_handler, bond_get_handler, import_config):
+    env_config = import_config()
+    config = {
+        99: {
+            'tuya': [
+                {
+                    'id': 'asdf',
+                    'localKey': 'ghjk',
+                    'addr': '192.168.100.100',
+                    'version': 3.3,
+                    'actions': {
+                        'BTN_1': {
+                            'PRESS': 'TurnOn',
+                            'RELEASE': None,
+                        }
+                    }
+                },
+                {
+                    'id': 'qwer',
+                    'localKey': 'tyui',
+                    'addr': '192.168.100.200',
+                    'version': 3.1,
+                    'actions': {
+                        'BTN_1': {
+                            'PRESS': 'TurnOn',
+                            'RELEASE': None,
+                        }
+                    }
+                },
+            ],
+        }
+    }
+    subconfig = config[99]
+    mocker.patch('lutronbond.config.LUTRON_MAPPING', config)
+    mocker.patch('lutronbond.config.LUTRON2_MAPPING', {})
+    handler = mocker.Mock()
+    tuya_get_handler.return_value = handler
+
+    controller.add_listeners()
+
+    logger.debug.assert_called_with(
+        'Subscribing to %s:%s -> %s',
+        env_config.LUTRON_BRIDGE_ADDR, 99, subconfig
+    )
+    tuya_get_handler.assert_has_calls([
+        mocker.call(subconfig['tuya'][0]),
+        mocker.call(subconfig['tuya'][1]),
+    ])
+    assert not bond_get_handler.called
+    bus.sub.assert_has_calls([
+        mocker.call(
+            '{}:{}'.format(env_config.LUTRON_BRIDGE_ADDR, 99),
+            handler
+        ),
+        mocker.call(
+            '{}:{}'.format(env_config.LUTRON_BRIDGE_ADDR, 99),
+            handler
+        )
+    ])
 
 
 def test__add_tuya_and_bond_listeners(
@@ -235,8 +354,8 @@ def test__add_tuya_and_bond_listeners(
         'Subscribing to %s:%s -> %s',
         env_config.LUTRON_BRIDGE_ADDR, 99, subconfig
     )
-    tuya_get_handler.assert_called_with(subconfig)
-    bond_get_handler.assert_called_with(subconfig)
+    tuya_get_handler.assert_called_with(subconfig['tuya'])
+    bond_get_handler.assert_called_with(subconfig['bond'])
     bus.sub.assert_has_calls([
         mocker.call(
             '{}:{}'.format(env_config.LUTRON_BRIDGE_ADDR, 99),

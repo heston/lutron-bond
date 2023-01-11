@@ -127,9 +127,42 @@ LUTRON_MAPPING = {
 
 ```
 
-Both Tuya and Bond actions may be configured on the same Lutron ID. In other
-words, the same button on a Pico remote can trigger both a Bond device and a
+Both Tuya and Bond actions may be configured on the same Lutron ID. This means
+that the same button on a Pico remote can trigger both a Bond device and a
 Tuya device at the same time.
+
+In addition, the `tuya` and `bond` keys in the config also accept a list of
+actions. This allows a single Lutron action to control any number of Bond
+and any number of Tuya devices simultaneously. Kinda like scenes!
+
+```python
+LUTRON_MAPPING = {
+    21: {  # <-- This number is the Lutron Integration ID
+        'name': 'Pico 1',  # Optional, but helps readability
+        'tuya': [
+            {
+                'name': 'Tuya Switch 1',
+                # ...
+            },
+            {
+                'name': 'Tuya Switch 2',
+                # ...
+            }
+        ],
+        'bond': [
+            {
+                'name': 'Bond Device 1',
+                # ...
+            },
+            {
+                'name': 'Bond Device 2',
+                # ...
+            }
+        ]
+    }
+}
+
+```
 
 This has only been tested with Lutron Pico remotes. To see button mappings
 for a variety of different remotes, look on page 124 of the [Lutron

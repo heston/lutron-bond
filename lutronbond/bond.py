@@ -32,8 +32,7 @@ def get_handler(
         configmap: dict
 ) -> typing.Callable[[lutron.LutronEvent], typing.Awaitable[bool]]:
 
-    bond_config = configmap['bond']
-    actions = bond_config['actions']
+    actions = configmap['actions']
 
     async def handler(event: lutron.LutronEvent) -> bool:
         try:
@@ -73,17 +72,17 @@ def get_handler(
             logger.debug(
                 'Starting %s request to Bond Bridge %s',
                 action,
-                bond_config['id']
+                configmap['id']
             )
             await get_default_bond_connection().action(
-                bond_config['id'],
+                configmap['id'],
                 bond_action
             )
             logger.info(
                 '%s for %s request sent to Bond Bridge %s',
                 action,
                 configmap.get('name', 'Unnamed'),
-                bond_config['id']
+                configmap['id']
             )
             return True
 
