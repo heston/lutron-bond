@@ -64,16 +64,18 @@ def logger(mocker):
     return mocker.patch('lutronbond.bond.logger')
 
 
-@pytest.mark.asyncio
-async def test_get_handler__missing_actions(lutron_event):
-    handler = bond.get_handler({})
-
+def test_get_handler__missing_device(lutron_event):
     with pytest.raises(KeyError):
-        await handler(lutron_event)
+        bond.get_handler({})
+
+
+def test_get_handler__missing_actions(lutron_event):
+    with pytest.raises(KeyError):
+        bond.get_handler({'bond': {}})
 
 
 @pytest.mark.asyncio
-async def test_get_handler__unknown_component(lutron_event, logger):
+async def test_handler__unknown_component(lutron_event, logger):
     handler = bond.get_handler({'bond': {'actions': {}}})
 
     result = await handler(lutron_event)
@@ -87,7 +89,7 @@ async def test_get_handler__unknown_component(lutron_event, logger):
 
 
 @pytest.mark.asyncio
-async def test_get_handler__unknown_action(lutron_event, logger):
+async def test_handler__unknown_action(lutron_event, logger):
     handler = bond.get_handler({'bond': {'actions': {'UNKNOWN': {}}}})
 
     result = await handler(lutron_event)
@@ -101,7 +103,7 @@ async def test_get_handler__unknown_action(lutron_event, logger):
 
 
 @pytest.mark.asyncio
-async def test_get_handler__missing_action(lutron_event, logger):
+async def test_handler__none_action(lutron_event, logger):
     handler = bond.get_handler({'bond': {'actions': {'UNKNOWN': {'UNKNOWN': None}}}})
 
     result = await handler(lutron_event)
@@ -125,7 +127,7 @@ def mock_default_bond_connection(mocker, amock):
 
 
 @pytest.mark.asyncio
-async def test_get_handler__str_action(
+async def test_handler__str_action(
         lutron_event,
         logger,
         mock_bond_action,
@@ -148,7 +150,7 @@ async def test_get_handler__str_action(
 
 
 @pytest.mark.asyncio
-async def test_get_handler__dict_action(
+async def test_handler__dict_action(
         lutron_event,
         logger,
         mock_bond_action,
@@ -177,7 +179,7 @@ async def test_get_handler__dict_action(
 
 
 @pytest.mark.asyncio
-async def test_get_handler__retry_on_exception__failed(
+async def test_handler__retry_on_exception__failed(
         mocker,
         lutron_event,
         logger,
@@ -207,7 +209,7 @@ async def test_get_handler__retry_on_exception__failed(
 
 
 @pytest.mark.asyncio
-async def test_get_handler__retry_on_exception__success(
+async def test_handler__retry_on_exception__success(
         mocker,
         lutron_event,
         logger,
