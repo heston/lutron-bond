@@ -178,3 +178,40 @@ async def test_handler__turn_on(
         'Unnamed'
     )
     assert result is True
+
+
+@pytest.mark.asyncio
+async def test_handler__turn_off(
+        mocker,
+        lutron_event,
+        logger,
+        mock_device):
+    handler = tuya.get_handler({
+        'tuya': {
+            'id': 'asdf',
+            'addr': '10.0.0.2',
+            'localKey': 'ghjk',
+            'version': 3.3,
+            'actions': {
+                'UNKNOWN': {
+                    'UNKNOWN': 'TurnOff'
+                }
+            }
+        }
+    })
+
+    result = await handler(lutron_event)
+
+    logger.debug.assert_called_with(
+        'Starting %s request to Tuya device %s',
+        'TurnOff',
+        'asdf'
+    )
+    assert mock_device.turn_off.called
+    logger.info.assert_called_with(
+        '%s request sent to Tuya device %s (%s)',
+        'TurnOff',
+        'asdf',
+        'Unnamed'
+    )
+    assert result is True
