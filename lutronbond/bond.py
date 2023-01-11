@@ -32,10 +32,10 @@ def get_handler(
         configmap: dict
 ) -> typing.Callable[[lutron.LutronEvent], typing.Awaitable[bool]]:
 
-    async def handler(event: lutron.LutronEvent) -> bool:
-        bond_config = configmap['bond']
-        actions = bond_config['actions']
+    bond_config = configmap['bond']
+    actions = bond_config['actions']
 
+    async def handler(event: lutron.LutronEvent) -> bool:
         try:
             component = actions[event.component.name]
         except KeyError:
