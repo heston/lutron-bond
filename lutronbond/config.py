@@ -166,7 +166,7 @@ LUTRON_MAPPING: Dict[int, Dict] = {
             'actions': FAN_LIGHT_CONFIG,
         }
     },
-    00: {
+    13: {
         'name': 'Office Video Light Pico',
         'tuya': [
             {
