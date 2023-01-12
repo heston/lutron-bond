@@ -31,9 +31,8 @@ def test_sub__adds_multiple_actions(bus, mocker):
     assert len(bus._bus['test']) == 2
 
 
-@pytest.mark.asyncio
-async def test_pub__invalid_key(bus):
-    retval = await bus.pub('test')
+def test_pub__invalid_key(bus):
+    retval = bus.pub('test')
 
     assert retval is None
 
@@ -43,19 +42,21 @@ async def test_pub__single_action(bus, amock):
     action = amock()
     bus.sub('test', action)
 
-    await bus.pub('test')
+    bus.pub('test')
+    await bus.await_running_handlers()
 
     assert action.called
 
 
 @pytest.mark.asyncio
-async def test_pub__multiple_action(bus, amock):
+async def test_pub__multiple_actions(bus, amock):
     action1 = amock()
     action2 = amock()
     bus.sub('test', action1)
     bus.sub('test', action2)
 
-    await bus.pub('test')
+    bus.pub('test')
+    await bus.await_running_handlers()
 
     assert action1.called
     assert action2.called
@@ -66,7 +67,8 @@ async def test_pub__action_with_args(bus, amock):
     action = amock()
     bus.sub('test', action)
 
-    await bus.pub('test', 1, arg=2)
+    bus.pub('test', 1, arg=2)
+    await bus.await_running_handlers()
 
     action.assert_called_with(1, arg=2)
 

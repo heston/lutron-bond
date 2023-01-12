@@ -334,7 +334,6 @@ async def test__LutronConnection__stream__invalid_data(
 @pytest.mark.asyncio
 async def test__LutronConnection__stream__valid_data(
         mocker,
-        amock,
         logged_in_lutron_connection
 ):
     parse_mock = mocker.patch('lutronbond.lutron.LutronEvent.parse')
@@ -352,7 +351,7 @@ async def test__LutronConnection__stream__valid_data(
         asyncio.exceptions.IncompleteReadError(b'', 32),
     ]
 
-    callback = amock()
+    callback = mocker.Mock()
 
     with pytest.raises(asyncio.exceptions.IncompleteReadError):
         await logged_in_lutron_connection.stream(callback)

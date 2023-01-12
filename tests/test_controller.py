@@ -12,9 +12,9 @@ def logger(mocker):
 
 
 @pytest.fixture
-def bus(mocker, amock):
+def bus(mocker):
     bus = mocker.patch('lutronbond.eventbus.get_bus')
-    bus.return_value.pub = amock()
+    bus.return_value.pub = mocker.Mock()
     return bus.return_value
 
 
@@ -33,8 +33,7 @@ def reset_lutron_connections():
     lutron.reset_connection_cache()
 
 
-@pytest.mark.asyncio
-async def test__handler__invalid_operation(import_config, logger):
+def test__handler__invalid_operation(import_config, logger):
     config = import_config()
     event = lutron.LutronEvent(
         lutron.Operation.UNKNOWN,
@@ -44,13 +43,12 @@ async def test__handler__invalid_operation(import_config, logger):
         config.LUTRON_BRIDGE_ADDR
     )
 
-    await controller.handler(event)
+    controller.handler(event)
 
     logger.debug.assert_called_with('Skipping Lutron event: %s', event)
 
 
-@pytest.mark.asyncio
-async def test__handler__valid_operation(import_config, logger, bus):
+def test__handler__valid_operation(import_config, logger, bus):
     config = import_config()
     event = lutron.LutronEvent(
         lutron.Operation.DEVICE,
@@ -60,7 +58,7 @@ async def test__handler__valid_operation(import_config, logger, bus):
         config.LUTRON_BRIDGE_ADDR
     )
 
-    await controller.handler(event)
+    controller.handler(event)
 
     logger.info.assert_called_with('Handling Lutron event: %s', event)
     bus.pub.assert_called_with('{}:{}'.format(config.LUTRON_BRIDGE_ADDR, 99), event)
