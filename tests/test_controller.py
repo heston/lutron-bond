@@ -222,7 +222,7 @@ def test__add_tuya_listener(
         99: {
             'tuya': {
                 'id': 'asdf',
-                'localKey': 'ghjk',
+                'key': 'ghjk',
                 'addr': '192.168.100.100',
                 'version': 3.3,
                 'actions': {
@@ -259,7 +259,7 @@ def test__add_tuya_listener_list(
             'tuya': [
                 {
                     'id': 'asdf',
-                    'localKey': 'ghjk',
+                    'key': 'ghjk',
                     'addr': '192.168.100.100',
                     'version': 3.3,
                     'actions': {
@@ -271,7 +271,7 @@ def test__add_tuya_listener_list(
                 },
                 {
                     'id': 'qwer',
-                    'localKey': 'tyui',
+                    'key': 'tyui',
                     'addr': '192.168.100.200',
                     'version': 3.1,
                     'actions': {
@@ -320,7 +320,7 @@ def test__add_tuya_and_bond_listeners(
         99: {
             'tuya': {
                 'id': 'asdf',
-                'localKey': 'ghjk',
+                'key': 'ghjk',
                 'addr': '192.168.100.100',
                 'version': 3.3,
                 'actions': {

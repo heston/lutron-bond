@@ -23,7 +23,7 @@ def get_handler(
         device = tinytuya.OutletDevice(
             dev_id=configmap['id'],
             address=configmap['addr'],
-            local_key=configmap['localKey'],
+            local_key=configmap['key'],
             version=configmap['version']
         )
     except KeyError:

@@ -34,7 +34,7 @@ def test_get_handler__missing_actions():
         tuya.get_handler({
             'id': 'asdf',
             'addr': '10.0.0.2',
-            'localKey': 'ghjk',
+            'key': 'ghjk',
             'version': 3.3
         })
 
@@ -44,7 +44,7 @@ async def test_handler__missing_component(lutron_event, logger):
     handler = tuya.get_handler({
         'id': 'asdf',
         'addr': '10.0.0.2',
-        'localKey': 'ghjk',
+        'key': 'ghjk',
         'version': 3.3,
         'actions': {}
     })
@@ -64,7 +64,7 @@ async def test_handler__missing_action(lutron_event, logger):
     handler = tuya.get_handler({
         'id': 'asdf',
         'addr': '10.0.0.2',
-        'localKey': 'ghjk',
+        'key': 'ghjk',
         'version': 3.1,
         'actions': {
             'UNKNOWN': {}
@@ -86,7 +86,7 @@ async def test_handler__none_action(lutron_event, logger):
     handler = tuya.get_handler({
         'id': 'asdf',
         'addr': '10.0.0.2',
-        'localKey': 'ghjk',
+        'key': 'ghjk',
         'version': 3.1,
         'actions': {
             'UNKNOWN': {
@@ -105,7 +105,7 @@ async def test_handler__unknown_device_method(lutron_event, logger):
     handler = tuya.get_handler({
         'id': 'asdf',
         'addr': '10.0.0.2',
-        'localKey': 'ghjk',
+        'key': 'ghjk',
         'version': 3.3,
         'actions': {
             'UNKNOWN': {
@@ -137,7 +137,7 @@ async def test_handler__turn_on(
     handler = tuya.get_handler({
         'id': 'asdf',
         'addr': '10.0.0.2',
-        'localKey': 'ghjk',
+        'key': 'ghjk',
         'version': 3.3,
         'actions': {
             'UNKNOWN': {
@@ -172,7 +172,7 @@ async def test_handler__turn_off(
     handler = tuya.get_handler({
         'id': 'asdf',
         'addr': '10.0.0.2',
-        'localKey': 'ghjk',
+        'key': 'ghjk',
         'version': 3.3,
         'actions': {
             'UNKNOWN': {
