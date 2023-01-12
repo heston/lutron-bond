@@ -15,14 +15,14 @@ EVENT_OPERATION: lutron.Operation = lutron.Operation.DEVICE
 logger = logging.getLogger(__name__)
 
 
-async def handler(lutron_event: lutron.LutronEvent) -> None:
+def handler(lutron_event: lutron.LutronEvent) -> None:
     if lutron_event.operation != EVENT_OPERATION:
         logger.debug('Skipping Lutron event: %s', lutron_event)
         return
 
     logger.info('Handling Lutron event: %s', lutron_event)
 
-    await eventbus.get_bus().pub(
+    eventbus.get_bus().pub(
         '{}:{}'.format(lutron_event.bridge, lutron_event.device),
         lutron_event
     )

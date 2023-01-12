@@ -201,7 +201,7 @@ class LutronConnection:
 
     async def stream(
             self,
-            callback: typing.Callable[[LutronEvent], typing.Awaitable[None]]
+            callback: typing.Callable[[LutronEvent], None]
     ) -> None:
         self.logger.info('Listening for events...')
 
@@ -215,7 +215,7 @@ class LutronConnection:
                 self.logger.error('Error parsing event: %s', e)
                 continue
             else:
-                await callback(evt)
+                callback(evt)
 
 
 connections: typing.List[LutronConnection] = []
@@ -253,7 +253,7 @@ async def main() -> None:
         lambda: loop.create_task(shutdown())
     )
 
-    async def print_event(evt: LutronEvent) -> None:
+    def print_event(evt: LutronEvent) -> None:
         print(evt)
 
     get_lutron_connection(config.LUTRON_BRIDGE_ADDR)
