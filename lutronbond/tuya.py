@@ -4,7 +4,7 @@ import typing
 
 import tinytuya  # type: ignore
 
-from . import lutron
+from . import config, lutron
 
 
 logger = logging.getLogger(__name__)
@@ -29,6 +29,9 @@ def get_handler(
     except KeyError:
         logger.error('Invalid Tuya device: %s', configmap)
         raise
+
+    device.set_socketRetryLimit(config.TUYA_RETRY_COUNT)
+    device.set_socketTimeout(config.TUYA_CONNECTION_TIMEOUT)
 
     actions = configmap['actions']
 

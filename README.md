@@ -235,9 +235,9 @@ LUTRON2_MAPPING = {
 
 # Reliability Tuning
 
-In real-world testing, sometimes requests to the Bond Bridge time out or
-experience high latency. The following environment variables control settings
-that may help alleviate these issues:
+In real-world testing, sometimes requests to the Bond Bridge or Tuya device
+timeout or experience high latency. The following environment variables control
+settings that may help alleviate these issues:
 
 ```
 LB_BOND_KEEPALIVE_INTERVAL=0
@@ -252,6 +252,19 @@ LB_BOND_RETRY_COUNT=5
 The number of times to retry a request to the Bond Bridge in the case of a
 connection error. A higher value will increase reliability, at the cost of
 higher latency. Default value is 5.
+
+```
+LB_TUYA_RETRY_COUNT=3
+```
+The number of times to retry a request to a Tuya device in case of a
+connection error. A higher value will increase reliability, at the cost of
+higher latency. Default value is 3.
+
+```
+LB_TUYA_CONNECTION_TIMEOUT=3
+```
+The number of seconds to wait for a successful connection to a Tuya device
+before timing out.
 
 # Development & Testing
 
