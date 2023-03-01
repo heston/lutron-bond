@@ -31,6 +31,10 @@ class Component(enum.Enum):
     BTN_3 = 4
     BTN_RAISE = 5
     BTN_LOWER = 6
+    BTN_SCENE_1 = 8
+    BTN_SCENE_2 = 9
+    BTN_SCENE_3 = 10
+    BTN_SCENE_4 = 11
     UNKNOWN = -1
 
 

@@ -47,7 +47,7 @@ def test__LutronEvent__parse__unknown_operation():
 
 
 def test__LutronEvent__parse__unknown_component():
-    rawevent = b"~OUTPUT,16,9,1"
+    rawevent = b"~OUTPUT,16,99,1"
 
     result = lutron.LutronEvent.parse(rawevent, BRIDGE_ADDR)
 
