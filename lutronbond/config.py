@@ -54,7 +54,23 @@ FAN_LIGHT_CONFIG = {
     'BTN_LOWER': {
         'PRESS': 'StartDimmer',
         'RELEASE': 'Stop',
-    }
+    },
+    'BTN_SCENE_1': {
+        'PRESS': 'TurnLightOn',
+        'RELEASE': None,
+    },
+    'BTN_SCENE_2': {
+        'PRESS': 'TurnLightOn',
+        'RELEASE': None,
+    },
+    'BTN_SCENE_3': {
+        'PRESS': 'TurnLightOff',
+        'RELEASE': None,
+    },
+    'BTN_SCENE_4': {
+        'PRESS': 'TurnLightOff',
+        'RELEASE': None,
+    },
 }
 
 FAN_CONFIG = {
