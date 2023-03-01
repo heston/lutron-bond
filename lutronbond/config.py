@@ -146,15 +146,15 @@ LUTRON_MAPPING: Dict[int, Dict] = {
         }
     },
     8: {
-        'name': 'Living Room Pico',
+        'name': 'Living Room Keypad Pico',
         'bond': {
             'name': 'Living Room Fan Light',
             'id': BOND_IDS['Living Room'],
             'actions': FAN_LIGHT_CONFIG,
         }
     },
-    63: {
-        'name': 'Fireplace Pico',
+    13: {
+        'name': 'Fireplace Keypad Pico',
         'bond': {
             'name': 'Living Room Fan Light',
             'id': BOND_IDS['Living Room'],
@@ -185,7 +185,10 @@ LUTRON_MAPPING: Dict[int, Dict] = {
             'actions': FAN_LIGHT_CONFIG,
         }
     },
-    13: {
+}
+
+LUTRON2_MAPPING: Dict[int, Dict] = {
+    60: {
         'name': 'Office Video Light Pico',
         'tuya': [
             {
@@ -205,19 +208,5 @@ LUTRON_MAPPING: Dict[int, Dict] = {
                 'actions': SMART_SWITCH_ACTIONS,
             },
         ],
-    },
-}
-
-LUTRON2_MAPPING: Dict[int, Dict] = {
-    58: {
-        'name': 'Heated Outdoor Chair Pico',
-        'tuya': {
-            'name': 'Heated Outdoor Chairs',
-            'id': 'ebfe2b76f486db7b067lvm',
-            'key': 'b073d73bea4f94f5',
-            'addr': '192.168.1.195',
-            'version': 3.3,
-            'actions': SMART_SWITCH_ACTIONS,
-        },
     },
 }
