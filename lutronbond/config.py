@@ -36,16 +36,16 @@ TUYA_CONNECTION_TIMEOUT = int(get_env('LB_TUYA_CONNECTION_TIMEOUT', '3'), 10)
 
 FAN_LIGHT_CONFIG = {
     'BTN_1': {
-        'PRESS': 'TurnLightOn',
-        'RELEASE': None,
+        'PRESS': None,
+        'RELEASE': 'TurnLightOn',
     },
     'BTN_2': {
-        'PRESS': 'TurnLightOn',
-        'RELEASE': None,
+        'PRESS': None,
+        'RELEASE': 'TurnLightOn',
     },
     'BTN_3': {
-        'PRESS': 'TurnLightOff',
-        'RELEASE': None,
+        'PRESS': None,
+        'RELEASE': 'TurnLightOff',
     },
     'BTN_RAISE': {
         'PRESS': 'StartDimmer',
@@ -56,49 +56,49 @@ FAN_LIGHT_CONFIG = {
         'RELEASE': 'Stop',
     },
     'BTN_SCENE_1': {
-        'PRESS': 'TurnLightOn',
-        'RELEASE': None,
+        'PRESS': None,
+        'RELEASE': 'TurnLightOn',
     },
     'BTN_SCENE_2': {
-        'PRESS': 'TurnLightOn',
-        'RELEASE': None,
+        'PRESS': None,
+        'RELEASE': 'TurnLightOn',
     },
     'BTN_SCENE_3': {
-        'PRESS': 'TurnLightOff',
-        'RELEASE': None,
+        'PRESS': None,
+        'RELEASE': 'TurnLightOff',
     },
     'BTN_SCENE_4': {
-        'PRESS': 'TurnLightOff',
-        'RELEASE': None,
+        'PRESS': None,
+        'RELEASE': 'TurnLightOff',
     },
 }
 
 FAN_CONFIG = {
     'BTN_1': {
-        'PRESS': {
+        'PRESS': None,
+        'RELEASE': {
             'SetSpeed': 2,
         },
-        'RELEASE': None,
     },
     'BTN_2': {
-        'PRESS': 'ToggleDirection',
-        'RELEASE': None,
+        'PRESS': None,
+        'RELEASE': 'ToggleDirection',
     },
     'BTN_3': {
-        'PRESS': 'TurnOff',
-        'RELEASE': None,
+        'PRESS': None,
+        'RELEASE': 'TurnOff',
     },
     'BTN_RAISE': {
-        'PRESS': {
+        'PRESS': None,
+        'RELEASE': {
             'SetSpeed': 3,
         },
-        'RELEASE': None,
     },
     'BTN_LOWER': {
-        'PRESS': {
+        'PRESS': None,
+        'RELEASE': {
             'SetSpeed': 1,
         },
-        'RELEASE': None,
     }
 }
 
@@ -110,12 +110,12 @@ BOND_IDS = {
 
 SMART_SWITCH_ACTIONS = {
     'BTN_1': {
-        'PRESS': 'TurnOn',
-        'RELEASE': None,
+        'PRESS': None,
+        'RELEASE': 'TurnOn',
     },
     'BTN_3': {
-        'PRESS': 'TurnOff',
-        'RELEASE': None
+        'PRESS': None,
+        'RELEASE': 'TurnOff'
     },
 }
 
