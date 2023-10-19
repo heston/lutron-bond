@@ -129,7 +129,7 @@ def mock_device(mocker):
 
 
 @pytest.mark.asyncio
-async def test_handler__turn_on(
+async def test_handler__turn_on__success(
         mocker,
         lutron_event,
         logger,
@@ -161,6 +161,48 @@ async def test_handler__turn_on(
         'Unnamed'
     )
     assert result is True
+
+
+@pytest.mark.asyncio
+async def test_handler__turn_on__failure(
+        mocker,
+        lutron_event,
+        logger,
+        mock_device):
+    handler = tuya.get_handler({
+        'id': 'asdf',
+        'addr': '10.0.0.2',
+        'key': 'ghjk',
+        'version': 3.3,
+        'actions': {
+            'UNKNOWN': {
+                'UNKNOWN': 'TurnOn'
+            }
+        }
+    })
+
+    mock_device.turn_on.return_value = {
+        'Error': 'Network Error: Device Unreachable',
+        'Err': '905',
+        'Payload': None
+    }
+
+    result = await handler(lutron_event)
+
+    logger.debug.assert_called_with(
+        'Starting %s request to Tuya device %s',
+        'TurnOn',
+        'asdf'
+    )
+    assert mock_device.turn_on.called
+    logger.error.assert_called_with(
+        '%s request to Tuya device %s (%s) failed: %s',
+        'TurnOn',
+        'asdf',
+        'Unnamed',
+        'Network Error: Device Unreachable'
+    )
+    assert result is False
 
 
 @pytest.mark.asyncio
