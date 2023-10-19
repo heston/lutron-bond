@@ -15,7 +15,7 @@ ACTIONS = {
 }
 
 
-def get_handler(
+def get_handler(  # noqa: C901
         configmap: dict
 ) -> typing.Callable[[lutron.LutronEvent], typing.Awaitable[bool]]:
 
@@ -60,15 +60,25 @@ def get_handler(
         method = getattr(device, method_name)
 
         def do_action() -> bool:
-            method()
-            logger.info(
-                '%s request sent to Tuya device %s (%s)',
-                action,
-                configmap['id'],
-                configmap.get('name', 'Unnamed')
-            )
+            result = method()
+            if 'Error' in result:
+                logger.error(
+                    '%s request to Tuya device %s (%s) failed: %s',
+                    action,
+                    configmap['id'],
+                    configmap.get('name', 'Unnamed'),
+                    result['Error']
+                )
+                return False
+            else:
+                logger.info(
+                    '%s request sent to Tuya device %s (%s)',
+                    action,
+                    configmap['id'],
+                    configmap.get('name', 'Unnamed')
+                )
 
-            return True
+                return True
 
         logger.debug(
             'Starting %s request to Tuya device %s',
