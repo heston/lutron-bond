@@ -54,7 +54,20 @@ def lutron_event():
         lutron.Operation.UNKNOWN,
         99,
         lutron.Component.UNKNOWN,
-        lutron.Action.UNKNOWN,
+        lutron.DeviceAction.UNKNOWN,
+        '',
+        '10.0.0.1'
+    )
+
+
+@pytest.fixture()
+def lutron_output_event():
+    return lutron.LutronEvent(
+        lutron.Operation.OUTPUT,
+        99,
+        lutron.Component.ANY,
+        lutron.OutputAction.SET_LEVEL,
+        '100.00',
         '10.0.0.1'
     )
 
@@ -163,6 +176,40 @@ async def test_handler__dict_action(
     logger.info.assert_called_with(
         '%s for %s request sent to Bond Bridge %s',
         'Hi',
+        'Unnamed',
+        'bondid'
+    )
+    assert result is True
+
+
+@pytest.mark.asyncio
+async def test_handler__OUTPUT_action(
+        lutron_output_event,
+        logger,
+        mock_bond_action,
+        mock_default_bond_connection):
+    handler = bond.get_handler({
+        'actions': {
+            'ANY': {
+                'SET_LEVEL': {
+                    '0.00': 'TurnOff',
+                    '100.00': 'TurnOn',
+                }
+            }
+        },
+        'id': 'bondid',
+    })
+
+    result = await handler(lutron_output_event)
+
+    mock_bond_action.assert_called_with('TurnOn', argument=None)
+    mock_default_bond_connection.action.assert_called_with(
+        'bondid',
+        mock_bond_action.return_value
+    )
+    logger.info.assert_called_with(
+        '%s for %s request sent to Bond Bridge %s',
+        'TurnOn',
         'Unnamed',
         'bondid'
     )

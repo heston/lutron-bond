@@ -13,14 +13,16 @@ def test__LutronEvent__init():
         lutron.Operation.UNKNOWN,
         -99,
         lutron.Component.UNKNOWN,
-        lutron.Action.UNKNOWN,
+        lutron.DeviceAction.UNKNOWN,
+        "",
         BRIDGE_ADDR
     )
 
     assert event.operation is lutron.Operation.UNKNOWN
     assert event.device == -99
     assert event.component is lutron.Component.UNKNOWN
-    assert event.action is lutron.Action.UNKNOWN
+    assert event.action is lutron.DeviceAction.UNKNOWN
+    assert event.parameters == ""
     assert event.bridge == BRIDGE_ADDR
 
 
@@ -46,40 +48,63 @@ def test__LutronEvent__parse__unknown_operation():
     assert result.operation is lutron.Operation.UNKNOWN
 
 
-def test__LutronEvent__parse__unknown_component():
-    rawevent = b"~OUTPUT,16,99,1"
+def test__LutronEvent__parse__unknown_device_component():
+    rawevent = b"~DEVICE,16,99,1,1"
 
     result = lutron.LutronEvent.parse(rawevent, BRIDGE_ADDR)
 
     assert result.component is lutron.Component.UNKNOWN
 
 
-def test__LutronEvent__parse__unknown_action():
-    rawevent = b"~OUTPUT,16,1,10"
+def test__LutronEvent__parse__unknown_output_action():
+    rawevent = b"~OUTPUT,16,9,10"
 
     result = lutron.LutronEvent.parse(rawevent, BRIDGE_ADDR)
 
-    assert result.action is lutron.Action.UNKNOWN
+    assert result.action is lutron.OutputAction.UNKNOWN
 
 
-def test__LutronEvent__parse__valid_event():
+def test__LutronEvent__parse__unknown_device_action():
+    rawevent = b"~DEVICE,16,1,10,1"
+
+    result = lutron.LutronEvent.parse(rawevent, BRIDGE_ADDR)
+
+    assert result.action is lutron.DeviceAction.UNKNOWN
+
+
+def test__LutronEvent__parse__valid_device_event():
+    rawevent = b"~DEVICE,16,2,1,1"
+
+    result = lutron.LutronEvent.parse(rawevent, BRIDGE_ADDR)
+
+    assert result.operation is lutron.Operation.DEVICE
+    assert result.device == 16
+    assert result.component is lutron.Component.BTN_1
+    assert result.action is lutron.DeviceAction.ENABLE
+    assert result.parameters == "1"
+    assert result.bridge == BRIDGE_ADDR
+
+
+def test__LutronEvent__parse__valid_output_event():
     rawevent = b"~OUTPUT,16,2,1"
 
     result = lutron.LutronEvent.parse(rawevent, BRIDGE_ADDR)
 
     assert result.operation is lutron.Operation.OUTPUT
     assert result.device == 16
-    assert result.component is lutron.Component.BTN_1
-    assert result.action is lutron.Action.ENABLE
+    assert result.component is lutron.Component.ANY
+    assert result.action is lutron.OutputAction.START_RAISING
+    assert result.parameters == "1"
     assert result.bridge == BRIDGE_ADDR
 
 
 def test__LutronEvent__repr():
     event = lutron.LutronEvent(
-        lutron.Operation.OUTPUT,
+        lutron.Operation.DEVICE,
         7,
         lutron.Component.BTN_1,
-        lutron.Action.PRESS,
+        lutron.DeviceAction.PRESS,
+        "",
         BRIDGE_ADDR
     )
 
@@ -87,26 +112,43 @@ def test__LutronEvent__repr():
 
     assert (
         "LutronEvent("
-        "operation=Operation.OUTPUT, "
+        "operation=Operation.DEVICE, "
         "device=7, "
         "component=Component.BTN_1, "
-        "action=Action.PRESS, "
+        "action=DeviceAction.PRESS, "
+        "parameters=None, "
         "bridge=10.0.0.1)"
     ) == result
 
 
-def test__LutronEvent__str():
+def test__LutronEvent__DEVICE_str():
     event = lutron.LutronEvent(
-        lutron.Operation.OUTPUT,
+        lutron.Operation.DEVICE,
         7,
         lutron.Component.BTN_1,
-        lutron.Action.PRESS,
+        lutron.DeviceAction.PRESS,
+        "",
         BRIDGE_ADDR
     )
 
     result = str(event)
 
-    assert "LutronEvent(BRIDGE:10.0.0.1 OUTPUT:7 BTN_1:PRESS)" == result
+    assert "LutronEvent(BRIDGE:10.0.0.1 DEVICE:7 BTN_1:PRESS:None)" == result
+
+
+def test__LutronEvent__OUTPUT_str():
+    event = lutron.LutronEvent(
+        lutron.Operation.OUTPUT,
+        7,
+        lutron.Component.ANY,
+        lutron.OutputAction.SET_LEVEL,
+        "100.0",
+        BRIDGE_ADDR
+    )
+
+    result = str(event)
+
+    assert "LutronEvent(BRIDGE:10.0.0.1 OUTPUT:7 ANY:SET_LEVEL:100.0)" == result
 
 
 @pytest.fixture
@@ -338,10 +380,11 @@ async def test__LutronConnection__stream__valid_data(
 ):
     parse_mock = mocker.patch('lutronbond.lutron.LutronEvent.parse')
     event = lutron.LutronEvent(
-        lutron.Operation.OUTPUT,
+        lutron.Operation.DEVICE,
         1,
         lutron.Component.BTN_1,
-        lutron.Action.PRESS,
+        lutron.DeviceAction.PRESS,
+        "",
         BRIDGE_ADDR
     )
     parse_mock.return_value = event

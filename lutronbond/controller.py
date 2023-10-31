@@ -10,13 +10,16 @@ from . import lutron
 from . import tuya
 
 
-EVENT_OPERATION: lutron.Operation = lutron.Operation.DEVICE
+EVENT_OPERATION: list[lutron.Operation] = [
+    lutron.Operation.DEVICE,
+    lutron.Operation.OUTPUT,
+]
 
 logger = logging.getLogger(__name__)
 
 
 def handler(lutron_event: lutron.LutronEvent) -> None:
-    if lutron_event.operation != EVENT_OPERATION:
+    if lutron_event.operation not in EVENT_OPERATION:
         logger.debug('Skipping Lutron event: %s', lutron_event)
         return
 

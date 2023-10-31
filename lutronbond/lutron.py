@@ -26,6 +26,7 @@ class Operation(enum.Enum):
 
 
 class Component(enum.Enum):
+    ANY = 1
     BTN_1 = 2
     BTN_2 = 3
     BTN_3 = 4
@@ -39,6 +40,10 @@ class Component(enum.Enum):
 
 
 class Action(enum.Enum):
+    pass
+
+
+class DeviceAction(Action):
     ENABLE = 1
     DISABLE = 2
     PRESS = 3
@@ -51,6 +56,15 @@ class Action(enum.Enum):
     UNKNOWN = -1
 
 
+class OutputAction(Action):
+    SET_LEVEL = 1
+    START_RAISING = 2
+    START_LOWERING = 3
+    STOP_RAISING_OR_LOWERING = 4
+    UNKNOWN = -1
+    # Additional actions available, but omitted
+
+
 class LutronEvent:
 
     def __init__(
@@ -59,15 +73,17 @@ class LutronEvent:
             device: int,
             component: Component,
             action: Action,
+            parameters: str,
             bridge: str):
         self.operation = operation
         self.device = device
         self.component = component
         self.action = action
+        self.parameters = parameters
         self.bridge = bridge
 
     @classmethod
-    def parse(cls, raw: bytes, bridge: str) -> LutronEvent:
+    def parse(cls, raw: bytes, bridge: str) -> LutronEvent:  # noqa: C901
         logger.debug('Parsing: %s', raw)
 
         # ~OUTPUT,16,2,3
@@ -81,7 +97,7 @@ class LutronEvent:
             operation = parts[0].decode()
             device = int(parts[1])
             component = int(parts[2])
-            action = float(parts[3])
+            action = parts[3]
         except IndexError:
             raise ValueError('Invalid event format: {!r}'.format(raw))
 
@@ -90,35 +106,56 @@ class LutronEvent:
         except ValueError:
             operation_enum = Operation.UNKNOWN
 
-        try:
-            component_enum = Component(component)
-        except ValueError:
-            component_enum = Component.UNKNOWN
+        if operation_enum is Operation.OUTPUT:
+            component_enum = Component.ANY
 
-        try:
-            action_enum = Action(action)
-        except ValueError:
-            action_enum = Action.UNKNOWN
+            try:
+                action_enum: Action = OutputAction(component)
+            except ValueError:
+                action_enum = OutputAction.UNKNOWN
 
-        return cls(operation_enum, device, component_enum, action_enum, bridge)
+            parameters = action.decode()
+        else:
+            try:
+                component_enum = Component(component)
+            except ValueError:
+                component_enum = Component.UNKNOWN
+
+            try:
+                action_enum = DeviceAction(float(action))
+            except ValueError:
+                action_enum = DeviceAction.UNKNOWN
+
+            try:
+                parameters = parts[4].decode()
+            except IndexError:
+                parameters = ""
+
+        return cls(operation_enum, device, component_enum, action_enum, parameters, bridge)
 
     def __repr__(self) -> str:
         return (
             'LutronEvent('
-            'operation={}, device={}, component={}, action={}, bridge={}'
+            'operation={}, device={}, component={}, action={}, parameters={}, bridge={}'
             ')'.format(
-                self.operation, self.device, self.component, self.action, self.bridge
+                self.operation,
+                self.device,
+                self.component,
+                self.action,
+                self.parameters or None,
+                self.bridge
             )
         )
 
     def __str__(self) -> str:
         return (
-            'LutronEvent(BRIDGE:{} {}:{} {}:{})'.format(
+            'LutronEvent(BRIDGE:{} {}:{} {}:{}:{})'.format(
                 self.bridge,
                 self.operation.name,
                 self.device,
                 self.component.name,
-                self.action.name
+                self.action.name,
+                self.parameters or None
             )
         )
 

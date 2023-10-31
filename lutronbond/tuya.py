@@ -15,6 +15,14 @@ ACTIONS = {
 }
 
 
+def is_output_event(event: lutron.LutronEvent) -> bool:
+    return (
+        event.operation.name == "OUTPUT" and
+        event.component.name == "ANY" and
+        event.action.name == "SET_LEVEL"
+    )
+
+
 def get_handler(  # noqa: C901
         configmap: dict
 ) -> typing.Callable[[lutron.LutronEvent], typing.Awaitable[bool]]:
@@ -50,6 +58,13 @@ def get_handler(  # noqa: C901
 
         if action is None:
             return False
+
+        if is_output_event(event):
+            try:
+                action = action[event.parameters]
+            except KeyError:
+                logger.warning('Unknown action: %s:%s', event.component.name, event.parameters)
+                return False
 
         try:
             method_name = ACTIONS[action]
