@@ -119,6 +119,15 @@ SMART_SWITCH_ACTIONS = {
     },
 }
 
+SMART_SWITCH_OUTPUT_ACTIONS = {
+    'ANY': {
+        'SET_LEVEL': {
+            '100.00': 'TurnOn',
+            '0.00': 'TurnOff',
+        }
+    }
+}
+
 LUTRON_MAPPING: Dict[int, Dict] = {
     # Lutron Integration ID->Bond/Tuya Device
     21: {
@@ -183,6 +192,28 @@ LUTRON_MAPPING: Dict[int, Dict] = {
             'name': 'Guest Room Fan Light',
             'id': BOND_IDS['Guest Room'],
             'actions': FAN_LIGHT_CONFIG,
+        }
+    },
+    53: {
+        'name': 'Ada Bedroom Main Lights',
+        'tuya': {
+            'name': 'Ada Bedroom Butterfly Light',
+            'id': 'eb92905167786963c1nlkc',
+            'key': 't(cD_7>a$5LA(8}m',
+            'addr': '192.168.1.138',
+            'version': 3.3,
+            'actions': SMART_SWITCH_OUTPUT_ACTIONS,
+        }
+    },
+    50: {
+        'name': 'Hayes Bedroom Main Lights',
+        'tuya': {
+            'name': 'Hayes Bedroom Cloud Light',
+            'id': 'eb0e8441252f2f6d2bppsu',
+            'key': '$$/</w7Q+cQ}#Mt1',
+            'addr': '192.168.1.50',
+            'version': 3.3,
+            'actions': SMART_SWITCH_OUTPUT_ACTIONS,
         }
     },
 }
