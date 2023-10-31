@@ -39,7 +39,8 @@ def test__handler__invalid_operation(import_config, logger):
         lutron.Operation.UNKNOWN,
         99,
         lutron.Component.BTN_1,
-        lutron.Action.ENABLE,
+        lutron.DeviceAction.ENABLE,
+        "",
         config.LUTRON_BRIDGE_ADDR
     )
 
@@ -48,13 +49,31 @@ def test__handler__invalid_operation(import_config, logger):
     logger.debug.assert_called_with('Skipping Lutron event: %s', event)
 
 
-def test__handler__valid_operation(import_config, logger, bus):
+def test__handler__valid_operation__DEVICE(import_config, logger, bus):
     config = import_config()
     event = lutron.LutronEvent(
         lutron.Operation.DEVICE,
         99,
         lutron.Component.BTN_1,
-        lutron.Action.PRESS,
+        lutron.DeviceAction.PRESS,
+        "",
+        config.LUTRON_BRIDGE_ADDR
+    )
+
+    controller.handler(event)
+
+    logger.info.assert_called_with('Handling Lutron event: %s', event)
+    bus.pub.assert_called_with('{}:{}'.format(config.LUTRON_BRIDGE_ADDR, 99), event)
+
+
+def test__handler__valid_operation__OUTPUT(import_config, logger, bus):
+    config = import_config()
+    event = lutron.LutronEvent(
+        lutron.Operation.OUTPUT,
+        99,
+        lutron.Component.ANY,
+        lutron.OutputAction.SET_LEVEL,
+        "100.00",
         config.LUTRON_BRIDGE_ADDR
     )
 

@@ -9,7 +9,20 @@ def lutron_event():
         lutron.Operation.UNKNOWN,
         99,
         lutron.Component.UNKNOWN,
-        lutron.Action.UNKNOWN,
+        lutron.DeviceAction.UNKNOWN,
+        '',
+        '10.0.0.1'
+    )
+
+
+@pytest.fixture()
+def lutron_output_event():
+    return lutron.LutronEvent(
+        lutron.Operation.OUTPUT,
+        99,
+        lutron.Component.ANY,
+        lutron.OutputAction.SET_LEVEL,
+        '100.00',
         '10.0.0.1'
     )
 
@@ -129,7 +142,7 @@ def mock_device(mocker):
 
 
 @pytest.mark.asyncio
-async def test_handler__turn_on__success(
+async def test_handler__turn_on__success__DEVICE(
         mocker,
         lutron_event,
         logger,
@@ -147,6 +160,44 @@ async def test_handler__turn_on__success(
     })
 
     result = await handler(lutron_event)
+
+    logger.debug.assert_called_with(
+        'Starting %s request to Tuya device %s',
+        'TurnOn',
+        'asdf'
+    )
+    assert mock_device.turn_on.called
+    logger.info.assert_called_with(
+        '%s request sent to Tuya device %s (%s)',
+        'TurnOn',
+        'asdf',
+        'Unnamed'
+    )
+    assert result is True
+
+
+@pytest.mark.asyncio
+async def test_handler__turn_on__success__OUTPUT(
+        mocker,
+        lutron_output_event,
+        logger,
+        mock_device):
+    handler = tuya.get_handler({
+        'id': 'asdf',
+        'addr': '10.0.0.2',
+        'key': 'ghjk',
+        'version': 3.3,
+        'actions': {
+            'ANY': {
+                'SET_LEVEL': {
+                    '100.00': 'TurnOn',
+                    '0.00': 'TurnOff',
+                }
+            }
+        }
+    })
+
+    result = await handler(lutron_output_event)
 
     logger.debug.assert_called_with(
         'Starting %s request to Tuya device %s',
@@ -206,7 +257,7 @@ async def test_handler__turn_on__failure(
 
 
 @pytest.mark.asyncio
-async def test_handler__turn_off(
+async def test_handler__turn_off__DEVICE(
         mocker,
         lutron_event,
         logger,
@@ -224,6 +275,46 @@ async def test_handler__turn_off(
     })
 
     result = await handler(lutron_event)
+
+    logger.debug.assert_called_with(
+        'Starting %s request to Tuya device %s',
+        'TurnOff',
+        'asdf'
+    )
+    assert mock_device.turn_off.called
+    logger.info.assert_called_with(
+        '%s request sent to Tuya device %s (%s)',
+        'TurnOff',
+        'asdf',
+        'Unnamed'
+    )
+    assert result is True
+
+
+@pytest.mark.asyncio
+async def test_handler__turn_off__OUTPUT(
+        mocker,
+        lutron_output_event,
+        logger,
+        mock_device):
+    handler = tuya.get_handler({
+        'id': 'asdf',
+        'addr': '10.0.0.2',
+        'key': 'ghjk',
+        'version': 3.3,
+        'actions': {
+            'ANY': {
+                'SET_LEVEL': {
+                    '100.00': 'TurnOn',
+                    '0.00': 'TurnOff',
+                }
+            }
+        }
+    })
+
+    lutron_output_event.parameters = '0.00'
+
+    result = await handler(lutron_output_event)
 
     logger.debug.assert_called_with(
         'Starting %s request to Tuya device %s',
