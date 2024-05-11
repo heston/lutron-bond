@@ -164,9 +164,35 @@ LUTRON_MAPPING = {
 
 ```
 
-This has only been tested with Lutron Pico remotes. To see button mappings
-for a variety of different remotes, look on page 124 of the [Lutron
-Integration Protocol document 040249](https://www.lutron.com/TechnicalDocumentLibrary/040249.pdf)
+This has been tested with Lutron Pico remotes and Lutron Caseta wall switches.
+To see button mappings for a variety of different remotes, look on page 124 of the [Lutron
+Integration Protocol document 040249](https://www.lutron.com/TechnicalDocumentLibrary/040249.pdf).
+
+Note that when using Lutron hard-wired switches, it's not possible to tell
+which buttons were pressed, only what the output level was set at. As such,
+specifying actions is a little different:
+
+```python
+LUTRON_MAPPING = {
+    21: {  # <-- This number is the Lutron Integration ID
+        'name': 'Light',  # This is technically optional, but helps readability
+        'bond': {
+            'id': '6409d2a2',  # The ID of the Bond device (may be 8 or 16 chars)
+            'actions': {
+                'ANY': {  # <-- Special value for all button presses
+                    'SET_LEVEL': {. # <-- Output action
+                        '100.00': 'TurnLightOn',  # Bond action when output is at 100.00%
+                        '0.00': 'TurnLightOff',  # Bond action when output is at 0.00%
+                    }
+                }
+            }
+        }
+    }
+}
+
+```
+
+
 
 The [Bond API docs](http://docs-local.appbond.com/) may also be helpful for
 determining how to control specific devices.
@@ -184,7 +210,7 @@ python3 -m lutronbond.lutron
 ```
 
 This will log events to stdout when Lutron buttons are pressed. Just run that,
-and start pressing buttons on Pico remotes to figure out what IDs to use.
+and start pressing buttons on Lutron devices to figure out what IDs to use.
 
 ## To figure out Bond IDs
 
