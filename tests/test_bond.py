@@ -118,6 +118,8 @@ async def test_handler__none_action(lutron_event, logger):
 
     assert result is False
 
+    assert not logger.warning.called
+
 
 @pytest.fixture
 def mock_bond_action(mocker):
