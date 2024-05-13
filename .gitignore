@@ -130,3 +130,9 @@ dmypy.json
 
 # macOS
 .DS_Store
+
+#tinytuya
+devices.json
+snapshot.json
+tinytuya.json
+tuya-raw.json
