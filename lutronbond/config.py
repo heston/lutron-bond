@@ -219,7 +219,36 @@ LUTRON_MAPPING: Dict[int, Dict] = {
     },
     60: {
         'name': 'Hayes Cloud Light Pico',
-        'tuya': dict(HAYES_CLOUD_LIGHT, actions=SMART_SWITCH_ACTIONS)
+        'tuya': dict(HAYES_CLOUD_LIGHT, actions=SMART_SWITCH_ACTIONS),
+        'lutron': {
+            'name': 'Hayes Bedroom Main Lights',
+            'bridge': 1,
+            'id': 50,
+            'actions': {
+                'BTN_RAISE': {
+                    'PRESS': None,
+                    'RELEASE': {
+                        'SET_LEVEL': '100,00.50',
+                        # In English:
+                        #   when integration ID 60's BTN_RAISE is released,
+                        #   set the output level of integration ID 50 to
+                        #   100 with a transition duration of half a second.
+                    },
+                },
+                'BTN_LOWER': {
+                    'PRESS': None,
+                    'RELEASE': {
+                        'SET_LEVEL': '0,01',
+                    },
+                },
+                'BTN_2': {
+                    'PRESS': None,
+                    'RELEASE': {
+                        'SET_LEVEL': '38,01',
+                    }
+                },
+            }
+        }
     },
 }
 
