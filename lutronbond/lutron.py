@@ -66,6 +66,7 @@ class OutputAction(Action):
 
 
 class LutronEvent:
+    PREFIX = '~'
 
     def __init__(
             self,
@@ -86,13 +87,23 @@ class LutronEvent:
     def parse(cls, raw: bytes, bridge: str) -> LutronEvent:  # noqa: C901
         logger.debug('Parsing: %s', raw)
 
+        # Just good practice
+        raw = raw.strip()
+
+        # The first message after a command was sent will include the
+        # ready prompt. We can safely remove it.
+        if raw.startswith(READY_PROMPT):
+            raw = raw[len(READY_PROMPT):]
+
         # ~OUTPUT,16,2,3
-        if not raw.startswith(b'~'):
+        if not raw.startswith(cls.PREFIX.encode('ascii')):
+            # This is not an event we recognize
             raise ValueError('Unrecognized event: {!r}'.format(raw))
 
         # Consume leading ~
-        raw = raw.strip()[1:]
+        raw = raw[1:]
         parts = raw.split(b',')
+
         try:
             operation = parts[0].decode()
             device = int(parts[1])
@@ -135,9 +146,10 @@ class LutronEvent:
 
     def __repr__(self) -> str:
         return (
-            'LutronEvent('
+            '{}('
             'operation={}, device={}, component={}, action={}, parameters={}, bridge={}'
             ')'.format(
+                self.__class__.__name__,
                 self.operation,
                 self.device,
                 self.component,
@@ -149,7 +161,8 @@ class LutronEvent:
 
     def __str__(self) -> str:
         return (
-            'LutronEvent(BRIDGE:{} {}:{} {}:{}:{})'.format(
+            '{}(BRIDGE:{} {}:{} {}:{}:{})'.format(
+                self.__class__.__name__,
                 self.bridge,
                 self.operation.name,
                 self.device,
@@ -158,6 +171,32 @@ class LutronEvent:
                 self.parameters or None
             )
         )
+
+
+class LutronCommand(LutronEvent):
+    PREFIX = '#'
+
+    def __str__(self) -> str:
+        """Formatted like #OUTPUT,1,1,75,01:30<CR><LF>"""
+
+        if self.action.__class__ is OutputAction:
+            return "{}{},{},{},{}\r\n".format(
+                self.PREFIX,
+                Operation.OUTPUT.value,
+                self.device,
+                self.action.value,
+                self.parameters
+            )
+        elif self.action.__class__ is DeviceAction:
+            return "{}{},{},{},{}\r\n".format(
+                self.PREFIX,
+                Operation.DEVICE.value,
+                self.device,
+                self.component.value,
+                self.action.value
+            )
+        else:
+            raise ValueError("Unknown Action subclass: {}".format(self.action.__class__))
 
 
 class LutronConnection:
@@ -258,6 +297,19 @@ class LutronConnection:
             else:
                 callback(evt)
 
+    async def send(self, command: LutronCommand) -> None:
+        if not self.is_connected:
+            raise RuntimeError('Socket not connected')
+
+        if not self.is_logged_in:
+            raise RuntimeError('Not logged in')
+
+        if self.host != command.bridge:
+            raise ValueError("Intended bridge does not match this connection")
+
+        self._writer.write(str(command).encode('ascii'))
+        await self._writer.drain()
+
 
 connections: typing.List[LutronConnection] = []
 
@@ -276,6 +328,131 @@ def get_default_lutron_connection() -> LutronConnection:
 def reset_connection_cache() -> None:
     connections.clear()
     get_lutron_connection.cache_clear()
+
+
+def get_handler(  # noqa: C901
+        configmap: dict
+) -> typing.Callable[[LutronEvent], typing.Awaitable[bool]]:
+
+    actions = configmap['actions']
+
+    if 'bridge' not in configmap:
+        bridge_addr = config.LUTRON_BRIDGE_ADDR
+    else:
+        if configmap['bridge'] == 1:
+            bridge_addr = config.LUTRON_BRIDGE_ADDR
+        elif configmap['bridge'] == 2:
+            bridge_addr = config.LUTRON_BRIDGE2_ADDR
+        else:
+            raise ValueError('Unknown Lutron bridge: {}'.format(configmap['bridge']))
+
+    integration_id = configmap['id']
+
+    async def handler(event: LutronEvent) -> bool:
+        try:
+            component = actions[event.component.name]
+        except KeyError:
+            logger.warning('Unknown component: %s', event.component)
+            return False
+
+        try:
+            action = component[event.action.name]
+        except KeyError:
+            logger.warning('Unknown action: %s', event.action)
+            return False
+
+        if action is None:
+            return False
+
+        arg = None
+        if isinstance(action, dict):
+            action, arg = list(action.items())[0]
+        else:
+            raise ValueError('Invalid action declaration: {}'.format(action))
+
+        # There are 4 cases that must be parsed slightly differently:
+        #
+        #    [Incoming Event]
+        #    DEVICE     OUTPUT
+        # +----------+----------+
+        # |  Case 1  +  Case 2  | DEVICE
+        # +----------+----------+        [Outgoing Action]
+        # |  Case 3  |  Case 4  | OUTPUT
+        # +----------+----------+
+        #
+        try:
+            # Cases 1 and 3 handle DEVICE events
+            #
+            # [Case 3]
+            # Check if this is a DEVICE event with an OUTPUT action
+            lutron_action: Action = OutputAction[action]
+            lutron_component = Component.ANY
+            lutron_parameters = arg
+            lutron_operation = Operation.OUTPUT
+        except KeyError:
+            # [Case 1]
+            # That failed, so check if this is a DEVICE event with a DEVICE action
+            try:
+                lutron_component = Component[action]
+                lutron_action = DeviceAction[arg]
+                lutron_parameters = ""
+                lutron_operation = Operation.DEVICE
+            except KeyError:
+                # Cases 1 and 3 failed, so maybe this is an OUTPUT event
+                if not event.parameters:
+                    # This isn't an OUTPUT event since all OUTPUT events have a parameter
+                    raise RuntimeError('Unknown action encountered: {}'.format(action))
+
+                # Cases 2 and 4 handle OUTPUT events
+                #
+                # [Case 4]
+                # Check if this is an OUTPUT event with an OUTPUT action
+                try:
+                    try:
+                        action_spec = component[event.action.name][event.parameters]
+                    except KeyError:
+                        logger.warning(
+                            'Action not specified in config: %s:%s',
+                            event.action,
+                            event.parameters
+                        )
+                        return False
+
+                    action, arg = list(action_spec.items())[0]
+
+                    lutron_action = OutputAction[action]
+                    lutron_component = Component.ANY
+                    lutron_parameters = arg
+                    lutron_operation = Operation.OUTPUT
+                except KeyError:
+                    # [Case 2]
+                    # That failed, so check if this is an OUTPUT event with a DEVICE action
+                    try:
+                        lutron_component = Component[action]
+                        lutron_action = DeviceAction[arg]
+                        lutron_parameters = ""
+                        lutron_operation = Operation.DEVICE
+                    except KeyError as e:
+                        # We shouldn't ever get here
+                        raise RuntimeError('Unknown error encountered: {!r}'.format(e))
+
+        lutron_command = LutronCommand(
+            lutron_operation,
+            integration_id,
+            lutron_component,
+            lutron_action,
+            lutron_parameters,
+            bridge_addr
+        )
+
+        logger.debug(
+            'Translated event into Lutron command: %s', lutron_command
+        )
+
+        await get_lutron_connection(bridge_addr).send(lutron_command)
+        return True
+
+    return handler
 
 
 async def main() -> None:
