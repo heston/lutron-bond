@@ -54,6 +54,13 @@ def add_listeners_for_bridge(bridge_addr: str, config_map: typing.Dict) -> None:
             else:
                 eventbus.get_bus().sub(key, tuya.get_handler(subconfig['tuya']))
 
+        if 'lutron' in subconfig:
+            if type(subconfig['lutron']) is list:
+                for config_item in subconfig['lutron']:
+                    eventbus.get_bus().sub(key, lutron.get_handler(config_item))
+            else:
+                eventbus.get_bus().sub(key, lutron.get_handler(subconfig['lutron']))
+
 
 def add_listeners() -> None:
     add_listeners_for_bridge(config.LUTRON_BRIDGE_ADDR, config.LUTRON_MAPPING)

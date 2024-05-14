@@ -14,7 +14,7 @@ Connector between Lutron Caseta SmartBridge Pro and Bond Bridge and/or Tuya Devi
 
 _Optional_
 
-* [TuyaCloud](https://www.tuya.com/) device (like a smart outlet or lightbulb). Tuya is a white-label manufacturer, and their devices are sold under many names. Tuya devices work with the Smart Life app.
+* [TuyaCloud](https://www.tuya.com/) device (like a smart outlet or lightbulb). Tuya is a white-label manufacturer, and their devices are sold under many names. Tuya devices work with the *Smart Life* app.
 
 
 # Usage
@@ -38,6 +38,8 @@ computer is a good choice. However, how to deploy this is left as an exercise
 for the reader (look at [lutronbond.service](blob/main/lutronbond.service) for
 a starting place).
 
+To get started, try running it on your local workstation:
+
 ```bash
 python3 -m venv venv
 source venv/bin/activate
@@ -52,6 +54,7 @@ Alternatively, the environment variable export lines may be specified in a file
 named `.env` in the same directory as `run.sh`. For example:
 
 ```txt
+# Contents of .env file
 export LB_LUTRON_BRIDGE_ADDR="<IP address of Lutron bridge>"
 export LB_BOND_BRIDGE_ADDR="<IP address of Bond Bridge>"
 export LB_BOND_BRIDGE_API_TOKEN="<Bond Bridge API token>"
@@ -63,17 +66,18 @@ export LB_BOND_BRIDGE_API_TOKEN="<Bond Bridge API token>"
 # Configuration
 
 Each home's configuration will be different. Look at
-[config.py](blob/main/lutronbond/config.py) for an example configuration.
+[config.py](blob/main/lutronbond/config.py) for comprehensive examples.
 
-Any button press from any Lutron switch/remote can be configured (in addition to
-its normal function) to control a Bond and/or Tuya device. To do this, you'll need the
-Lutron Integration ID (the ID of the Lutron switch in the hub). You will also need
-the Bond ID and/or Tuya device credentials.
+Any event from any Lutron switch or remote can be configured (in addition to
+its normal function) to control a Bond, Tuya, and/or other Lutron
+device.
 
-You'll also need to figure out which action the Bond Bridge or Tuya device should
-take when a Lutron action is performed.
+Further down in this file it describes how to find the various IDs and metadata
+needed by the config file.
 
-For example, to trigger a Bond action:
+## Configuration Options
+
+**To trigger a Bond action:**
 
 ```python
 LUTRON_MAPPING = {
@@ -97,10 +101,41 @@ LUTRON_MAPPING = {
 
 ```
 
-To see all the Bond actions available, take a look at the [Action class here](https://github.com/bondhome/bond-async/blob/master/bond_async/action.py#L14).
-Not all devices support all actions, so some trial-and-error may be needed.
+To see all the Bond actions available, take a look at the
+[Action class here](https://github.com/bondhome/bond-async/blob/master/bond_async/action.py#L14).
+The [Bond API docs](http://docs-local.appbond.com/) may also be helpful for
+determining how to control specific devices. Not all devices support all
+actions, so some trial-and-error may be needed.
 
-To trigger a Tuya action:
+Note that when using Lutron hard-wired switches, it's not possible to tell
+which buttons were pressed, only what the last output level was. As such,
+specifying actions is a little different. This format applies to all action
+types, not just Bond.
+
+```python
+LUTRON_MAPPING = {
+    21: {  # <-- This number is the Lutron Integration ID
+        'name': 'Light',  # This is technically optional, but helps readability
+        'bond': {
+            'id': '6409d2a2',  # The ID of the Bond device (may be 8 or 16 chars)
+            'actions': {
+                'ANY': {  # <-- Special value for all output actions
+                    'SET_LEVEL': { # <-- Output action
+                        '100.00': 'TurnLightOn',  # Bond action when output is at 100.00%
+                        '0.00': 'TurnLightOff',  # Bond action when output is at 0.00%
+                    }
+                }
+            }
+        }
+    }
+}
+
+```
+
+See page 6 of the [Lutron Integration Protocol document 040249](https://www.lutron.com/TechnicalDocumentLibrary/040249.pdf)
+for details on the syntax of monitoring levels.
+
+**To trigger a Tuya action:**
 
 ```python
 LUTRON_MAPPING = {
@@ -127,13 +162,76 @@ LUTRON_MAPPING = {
 
 ```
 
-Both Tuya and Bond actions may be configured on the same Lutron ID. This means
-that the same button on a Pico remote can trigger both a Bond device and a
-Tuya device at the same time.
+**To trigger a Lutron action:**
 
-In addition, the `tuya` and `bond` keys in the config also accept a list of
-actions. This allows a single Lutron action to control any number of Bond
-and any number of Tuya devices simultaneously. Kinda like scenes!
+```python
+LUTRON_MAPPING = {
+    21: {  # <-- This number is the Lutron Integration ID of the trigger
+        'name': 'My Lutron Device',  # Optional, but helps readability
+        'lutron': {
+            'id': 40,  # The Lutron Integration ID of the target
+            'name': 'My Other Lutron Device', # Optional, but helps readability
+            'bridge': 1,  # May be 1 or 2, indicating the Lutron bridge of the target.
+                          # See "Use with Two Lutron Bridges" in the docs, below.
+                          # Optional. If omitted, 1 is assumed.
+            'actions': {
+                # This is an action for a device trigger (like a Pico remote) and
+                # a device target (another Pico remote)
+                'BTN_1': {
+                    'PRESS': {
+                        'BTN_2': 'Press',
+                        # When button 1 on device 21 is pressed, simulate pressing
+                        # button 2 on device 40
+                    }.
+                },
+                # This is an action for a device trigger (like a Pico remote) and
+                # an output target (like a wall switch)
+                'BTN_3': {
+                    'PRESS': {
+                        'SET_LEVEL': '100',
+                        # When button 3 on device 21 is pressed, set the output level of
+                        # device 40 to 100 (fully on)
+                    }
+                },
+                # This is an action for an output trigger and a device target
+                'ANY': {  # <-- the ANY keyword is always used for output triggers
+                    'SET_LEVEL': {
+                        '100': {
+                            'BTN_1': 'Press',
+                            # When device 21 is set to output level 100, simulate pressing
+                            # button 1 on device 40
+                        },
+                    }
+                },
+                # This is an action for an output trigger and an output target
+                'ANY': {
+                    'SET_LEVEL': {
+                        '100': {
+                            'SET_LEVEL': '0',
+                            # When device 21 is set to output level 100 (fully on),
+                            # set the output level of device 40 to 0 (fully off)
+                        },
+                        '0': {
+                            'SET_LEVEL': '100',
+                            # When device 21 is set to output level 0, set the output level of
+                            # device 40 to 100
+                        }
+                    }
+                },
+            }
+        }
+    }
+}
+
+```
+
+Tuya, Bond, and Lutron actions may be configured on the same Integration ID.
+This means that the same button on a Pico remote can trigger actions across many
+devices at the same time. Actions are all run concurrently, to minimize delays.
+
+In addition, the `tuya`, `bond`, and `lutron` keys in the config also accept a
+list of actions. This allows a single Lutron event to control any number of
+Bond, Tuya, and Lutron devices simultaneously.
 
 ```python
 LUTRON_MAPPING = {
@@ -158,6 +256,16 @@ LUTRON_MAPPING = {
                 'name': 'Bond Device 2',
                 # ...
             }
+        ],
+        'lutron': [
+            {
+                'name': 'Lutron Device 1',
+                # ...
+            },
+            {
+                'name': 'Lutron Device 2',
+                # ...
+            }
         ]
     }
 }
@@ -165,43 +273,15 @@ LUTRON_MAPPING = {
 ```
 
 This has been tested with Lutron Pico remotes and Lutron Caseta wall switches.
-To see button mappings for a variety of different remotes, look on page 124 of the [Lutron
-Integration Protocol document 040249](https://www.lutron.com/TechnicalDocumentLibrary/040249.pdf).
-
-Note that when using Lutron hard-wired switches, it's not possible to tell
-which buttons were pressed, only what the output level was set at. As such,
-specifying actions is a little different:
-
-```python
-LUTRON_MAPPING = {
-    21: {  # <-- This number is the Lutron Integration ID
-        'name': 'Light',  # This is technically optional, but helps readability
-        'bond': {
-            'id': '6409d2a2',  # The ID of the Bond device (may be 8 or 16 chars)
-            'actions': {
-                'ANY': {  # <-- Special value for all button presses
-                    'SET_LEVEL': {. # <-- Output action
-                        '100.00': 'TurnLightOn',  # Bond action when output is at 100.00%
-                        '0.00': 'TurnLightOff',  # Bond action when output is at 0.00%
-                    }
-                }
-            }
-        }
-    }
-}
-
-```
+Lutron produces many other types of devices, which have not been tested.
+To see button mappings for a variety of different remotes, look on page 124 of
+the [Lutron Integration Protocol document 040249](https://www.lutron.com/TechnicalDocumentLibrary/040249.pdf).
 
 
+# Determining Lutron, Bond, and Tuya IDs
 
-The [Bond API docs](http://docs-local.appbond.com/) may also be helpful for
-determining how to control specific devices.
-
-
-# Determining Lutron and Bond IDs
-
-A couple helper scripts are available to determine the various IDs of the
-Lutron and Bond systems.
+Helper scripts are available to determine the various IDs and other metadata of
+the devices that may be monitored and controlled.
 
 ## To figure out Lutron IDs
 
@@ -209,8 +289,9 @@ Lutron and Bond systems.
 python3 -m lutronbond.lutron
 ```
 
-This will log events to stdout when Lutron buttons are pressed. Just run that,
-and start pressing buttons on Lutron devices to figure out what IDs to use.
+This will log events to stdout when Lutron buttons are pressed or switches are
+activated. Just run it and start pressing buttons on Lutron devices to
+figure out what IDs to use.
 
 ## To figure out Bond IDs
 
@@ -239,10 +320,11 @@ actions `TurnOn` and `TurnOff` are implemented.
 
 # Use with Two Lutron Bridges
 
-Some larger homes may have more than 75 Caseta devices, the limit of what can be paired
-to a single bridge. While not officially suported by Lutron, many people have had success
-utilizing multiple bridges to work around this. This integration supports up to two bridges
-simulatneously (and theoretically more, but I don't have an immediate need for that).
+Some larger homes may have more than 75 Caseta devices, the limit of what can be
+paired to a single bridge. While not officially suported by Lutron, many people
+have had success utilizing multiple bridges to work around this. This
+integration supports up to two bridges simulatneously (and theoretically more,
+but I don't have an immediate need for that).
 
 To use a second bridge, provide the following environment variable:
 
@@ -250,7 +332,8 @@ To use a second bridge, provide the following environment variable:
 export LB_LUTRON_BRIDGE2_ADDR="<IP address of second Lutron bridge>"
 ```
 
-In `config.py` specify an additional config for the second bridge, in this format:
+In `config.py` specify an additional config for the second bridge, in this
+format:
 
 ```python
 LUTRON2_MAPPING = {
@@ -259,49 +342,57 @@ LUTRON2_MAPPING = {
 }
 ```
 
-# Reliability Tuning
+# Advanced Settings
+
+### Performance Tuning
 
 In real-world testing, sometimes requests to the Bond Bridge or Tuya device
 timeout or experience high latency. The following environment variables control
-settings that may help alleviate these issues:
+settings that may help alleviate these issues. You may need to fiddle with the
+values to find ones that work. On a healthy network, the defaults should not
+need to be changed.
 
-```
+```bash
 LB_BOND_KEEPALIVE_INTERVAL=0
 ```
 This will periodically ping the Bond Bridge to ensure there is a valid route
 to it on the local network. The value is the number of seconds between pings. A
 value of `0` (the default) disables this feature. A reasonable value is 60-180.
 
-```
+```bash
 LB_BOND_RETRY_COUNT=5
 ```
 The number of times to retry a request to the Bond Bridge in the case of a
 connection error. A higher value will increase reliability, at the cost of
 higher latency. Default value is 5.
 
-```
+```bash
 LB_TUYA_RETRY_COUNT=3
 ```
 The number of times to retry a request to a Tuya device in case of a
 connection error. A higher value will increase reliability, at the cost of
 higher latency. Default value is 3.
 
-```
+```bash
 LB_TUYA_CONNECTION_TIMEOUT=3
 ```
 The number of seconds to wait for a successful connection to a Tuya device
-before timing out.
+before timing out. Default value is 3.
+
+### Other Settings
+
+```bash
+LB_LOG_LEVEL="INFO"
+```
+You can change the log level to see more (or less) output from the program.
+The following values are supported (from most to least verbose): `DEBUG`,
+`INFO`, `WARNING`, `ERROR`. Default value is `INFO`.
+
 
 # Development & Testing
 
-You can change the log level to see more (or less) output from the program.
-
-```bash
-export LB_LOG_LEVEL="DEBUG"
-```
-
-The following values are supported (from most to least verbose): `DEBUG`,
-`INFO`, `WARNING`, `ERROR`.
+The following instructions are for developers wanting to add new features
+in this project.
 
 To set up development dependencies:
 ```bash

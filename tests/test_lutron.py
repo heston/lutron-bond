@@ -8,6 +8,11 @@ from lutronbond import lutron
 BRIDGE_ADDR = '10.0.0.1'
 
 
+##
+# LutronEvent class tests
+##
+
+
 def test__LutronEvent__init():
     event = lutron.LutronEvent(
         lutron.Operation.UNKNOWN,
@@ -85,6 +90,19 @@ def test__LutronEvent__parse__valid_device_event():
     assert result.bridge == BRIDGE_ADDR
 
 
+def test__LutronEvent__parse__valid_device_event__after_command_sent():
+    rawevent = b"GNET> ~DEVICE,16,2,1,1"
+
+    result = lutron.LutronEvent.parse(rawevent, BRIDGE_ADDR)
+
+    assert result.operation is lutron.Operation.DEVICE
+    assert result.device == 16
+    assert result.component is lutron.Component.BTN_1
+    assert result.action is lutron.DeviceAction.ENABLE
+    assert result.parameters == "1"
+    assert result.bridge == BRIDGE_ADDR
+
+
 def test__LutronEvent__parse__valid_output_event():
     rawevent = b"~OUTPUT,16,2,1"
 
@@ -149,6 +167,59 @@ def test__LutronEvent__OUTPUT_str():
     result = str(event)
 
     assert "LutronEvent(BRIDGE:10.0.0.1 OUTPUT:7 ANY:SET_LEVEL:100.0)" == result
+
+
+##
+# LutronCommand class tests
+##
+
+def test__LutronCommand__init():
+    command = lutron.LutronCommand(
+        lutron.Operation.OUTPUT,
+        1,
+        lutron.Component.ANY,
+        lutron.OutputAction.SET_LEVEL,
+        "100.0",
+        BRIDGE_ADDR
+    )
+
+    assert command.operation is lutron.Operation.OUTPUT
+    assert command.device == 1
+    assert command.component is lutron.Component.ANY
+    assert command.action is lutron.OutputAction.SET_LEVEL
+    assert command.parameters == "100.0"
+    assert command.bridge == BRIDGE_ADDR
+
+
+def test__LutronCommand__output_action():
+    command = lutron.LutronCommand(
+        lutron.Operation.OUTPUT,
+        1,
+        lutron.Component.ANY,
+        lutron.OutputAction.SET_LEVEL,
+        "75",
+        BRIDGE_ADDR
+    )
+
+    assert "#OUTPUT,1,1,75\r\n" == str(command)
+
+
+def test__LutronCommand__device_action():
+    command = lutron.LutronCommand(
+        lutron.Operation.DEVICE,
+        2,
+        lutron.Component.BTN_3,
+        lutron.DeviceAction.PRESS,
+        "",
+        BRIDGE_ADDR
+    )
+
+    assert "#DEVICE,2,4,3\r\n" == str(command)
+
+
+##
+# LutronConnection class tests
+##
 
 
 @pytest.fixture
@@ -410,6 +481,74 @@ async def test__LutronConnection__stream__valid_data(
     )
 
 
+@pytest.fixture
+def lutron_command():
+    return lutron.LutronCommand(
+        lutron.Operation.OUTPUT,
+        1,
+        lutron.Component.ANY,
+        lutron.OutputAction.SET_LEVEL,
+        "75",
+        '10.0.0.1'
+    )
+
+
+@pytest.mark.asyncio
+async def test__LutronConnection__send__not_connected(
+    logged_in_lutron_connection,
+    lutron_command
+):
+    logged_in_lutron_connection.is_connected = False
+
+    with pytest.raises(RuntimeError):
+        await logged_in_lutron_connection.send(lutron_command)
+
+
+@pytest.mark.asyncio
+async def test__LutronConnection__send__not_logged_in(
+    logged_in_lutron_connection,
+    lutron_command
+):
+    logged_in_lutron_connection.is_logged_in = False
+
+    with pytest.raises(RuntimeError):
+        await logged_in_lutron_connection.send(lutron_command)
+
+
+@pytest.mark.asyncio
+async def test__LutronConnection__send__wrong_bridge(
+    logged_in_lutron_connection,
+    lutron_command
+):
+    lutron_command.bridge = '192.168.0.1'
+
+    with pytest.raises(ValueError):
+        await logged_in_lutron_connection.send(lutron_command)
+
+
+@pytest.mark.asyncio
+async def test__LutronConnection__send(
+    amock,
+    mocker,
+    logged_in_lutron_connection,
+    lutron_command
+):
+    logged_in_lutron_connection._writer = mocker.Mock()
+    logged_in_lutron_connection._writer.drain = amock()
+
+    await logged_in_lutron_connection.send(lutron_command)
+
+    logged_in_lutron_connection._writer.write.assert_called_with(
+        b'#OUTPUT,1,1,75\r\n'
+    )
+    assert logged_in_lutron_connection._writer.drain.called
+
+
+##
+# Module getters tests
+##
+
+
 def test_get_lutron_connection():
     result1 = lutron.get_lutron_connection('10.0.0.1')
     result2 = lutron.get_lutron_connection('10.0.0.1')
@@ -449,3 +588,457 @@ def test_reset_connection_cache():
     result2 = lutron.get_lutron_connection('10.0.0.1')
 
     assert result1 is not result2
+
+
+##
+# lutron.get_handler tests
+##
+
+
+@pytest.fixture()
+def logger(mocker):
+    return mocker.patch('lutronbond.lutron.logger')
+
+
+def test_get_handler__missing_actions():
+    with pytest.raises(KeyError):
+        lutron.get_handler({})
+
+
+def test_handler__unknown_bridge(logger):
+    with pytest.raises(ValueError):
+        lutron.get_handler({'actions': {}, 'bridge': 3})
+
+
+def test_handler__missing_integration_id(logger):
+    with pytest.raises(KeyError):
+        lutron.get_handler({'actions': {}, 'bridge': 1})
+
+
+@pytest.fixture()
+def lutron_device_event():
+    return lutron.LutronEvent(
+        lutron.Operation.DEVICE,
+        99,
+        lutron.Component.BTN_1,
+        lutron.DeviceAction.PRESS,
+        '',
+        '10.0.0.1'
+    )
+
+
+@pytest.mark.asyncio
+async def test_handler__unknown_component(lutron_device_event, logger):
+    handler = lutron.get_handler({'actions': {}, 'bridge': 1, 'id': 2})
+
+    result = await handler(lutron_device_event)
+
+    assert result is False
+
+    logger.warning.assert_called_with(
+        'Unknown component: %s',
+        lutron_device_event.component
+    )
+
+
+@pytest.mark.asyncio
+async def test_handler__unspecified_action(lutron_device_event, logger):
+    handler = lutron.get_handler(
+        {'actions': {'BTN_1': {}}, 'bridge': 1, 'id': 2}
+    )
+
+    result = await handler(lutron_device_event)
+
+    assert result is False
+
+    logger.warning.assert_called_with(
+        'Unknown action: %s',
+        lutron_device_event.action
+    )
+
+
+@pytest.mark.asyncio
+async def test_handler__none_action(lutron_device_event, logger):
+    handler = lutron.get_handler(
+        {'actions': {'BTN_1': {'PRESS': None}}, 'bridge': 1, 'id': 2}
+    )
+
+    result = await handler(lutron_device_event)
+
+    assert result is False
+
+    assert not logger.warning.called
+
+
+@pytest.mark.asyncio
+async def test_handler__invalid_device_action(lutron_device_event, logger):
+    handler = lutron.get_handler(
+        {'actions': {'BTN_1': {'PRESS': 'TurnOn'}}, 'bridge': 1, 'id': 2}
+    )
+
+    with pytest.raises(ValueError):
+        await handler(lutron_device_event)
+
+
+@pytest.fixture
+def get_lutron_connection(mocker, amock):
+    connection = mocker.Mock()
+    connection.send = amock()
+    mocker.patch('lutronbond.lutron.get_lutron_connection').return_value = connection
+    return connection
+
+
+@pytest.mark.asyncio
+async def test_handler__device_event__device_action(
+        get_lutron_connection,
+        lutron_device_event,
+        logger,
+        mocker
+):
+    handler = lutron.get_handler({
+        'actions': {
+            'BTN_1': {
+                'PRESS': {
+                    'BTN_1': 'PRESS'
+                }
+            }
+        },
+        'bridge': 1,
+        'id': 2
+    })
+
+    result = await handler(lutron_device_event)
+
+    assert result is True
+
+    call = logger.debug.call_args[0]
+    command = call[1]
+
+    assert (
+        'LutronCommand('
+        'operation=Operation.DEVICE, '
+        'device=2, '
+        'component=Component.BTN_1, '
+        'action=DeviceAction.PRESS, '
+        'parameters=None, '
+        'bridge=10.0.0.10'
+        ')') == repr(command)
+
+    logger.debug.assert_called_with(
+        'Translated event into Lutron command: %s', command
+    )
+
+
+@pytest.mark.asyncio
+async def test_handler__device_event__device_action__omitted_bridge(
+        get_lutron_connection,
+        lutron_device_event,
+        logger,
+        mocker
+):
+    handler = lutron.get_handler({
+        'actions': {
+            'BTN_1': {
+                'PRESS': {
+                    'BTN_1': 'PRESS'
+                }
+            }
+        },
+        'id': 2
+    })
+
+    result = await handler(lutron_device_event)
+
+    assert result is True
+
+    call = logger.debug.call_args[0]
+    command = call[1]
+
+    assert (
+        'LutronCommand('
+        'operation=Operation.DEVICE, '
+        'device=2, '
+        'component=Component.BTN_1, '
+        'action=DeviceAction.PRESS, '
+        'parameters=None, '
+        'bridge=10.0.0.10'
+        ')') == repr(command)
+
+    logger.debug.assert_called_with(
+        'Translated event into Lutron command: %s', command
+    )
+
+
+@pytest.mark.asyncio
+async def test_handler__device_event__device_action__bridge2(
+        get_lutron_connection,
+        lutron_device_event,
+        logger,
+        mocker
+):
+    handler = lutron.get_handler({
+        'actions': {
+            'BTN_1': {
+                'PRESS': {
+                    'BTN_1': 'PRESS'
+                }
+            }
+        },
+        'bridge': 2,
+        'id': 2
+    })
+
+    result = await handler(lutron_device_event)
+
+    assert result is True
+
+    call = logger.debug.call_args[0]
+    command = call[1]
+
+    assert (
+        'LutronCommand('
+        'operation=Operation.DEVICE, '
+        'device=2, '
+        'component=Component.BTN_1, '
+        'action=DeviceAction.PRESS, '
+        'parameters=None, '
+        'bridge=10.0.0.20'
+        ')') == repr(command)
+
+    logger.debug.assert_called_with(
+        'Translated event into Lutron command: %s', command
+    )
+
+
+@pytest.mark.asyncio
+async def test_handler__device_event__output_action(
+        get_lutron_connection,
+        lutron_device_event,
+        logger,
+        mocker
+):
+    handler = lutron.get_handler({
+        'actions': {
+            'BTN_1': {
+                'PRESS': {
+                    'SET_LEVEL': '100,0.01'
+                }
+            }
+        },
+        'bridge': 1,
+        'id': 2
+    })
+
+    result = await handler(lutron_device_event)
+
+    assert result is True
+
+    call = logger.debug.call_args[0]
+    command = call[1]
+
+    assert (
+        'LutronCommand('
+        'operation=Operation.OUTPUT, '
+        'device=2, '
+        'component=Component.ANY, '
+        'action=OutputAction.SET_LEVEL, '
+        'parameters=100,0.01, '
+        'bridge=10.0.0.10'
+        ')') == repr(command)
+
+    logger.debug.assert_called_with(
+        'Translated event into Lutron command: %s', command
+    )
+
+
+@pytest.fixture()
+def lutron_output_event():
+    return lutron.LutronEvent(
+        lutron.Operation.OUTPUT,
+        99,
+        lutron.Component.ANY,
+        lutron.OutputAction.SET_LEVEL,
+        '100',
+        '10.0.0.1'
+    )
+
+
+@pytest.mark.asyncio
+async def test_handler__output_event__output_action(
+        get_lutron_connection,
+        lutron_output_event,
+        logger,
+        mocker
+):
+    handler = lutron.get_handler({
+        'actions': {
+            'ANY': {
+                'SET_LEVEL': {
+                    '100': {
+                        'SET_LEVEL': '100,0.50',
+                    },
+                    '0': {
+                        'SET_LEVEL': '0,0.05',
+                    }
+                }
+            }
+        },
+        'bridge': 1,
+        'id': 2
+    })
+
+    result = await handler(lutron_output_event)
+
+    assert result is True
+
+    call = logger.debug.call_args[0]
+    command = call[1]
+
+    assert (
+        'LutronCommand('
+        'operation=Operation.OUTPUT, '
+        'device=2, '
+        'component=Component.ANY, '
+        'action=OutputAction.SET_LEVEL, '
+        'parameters=100,0.50, '
+        'bridge=10.0.0.10'
+        ')') == repr(command)
+
+    logger.debug.assert_called_with(
+        'Translated event into Lutron command: %s', command
+    )
+
+
+@pytest.mark.asyncio
+async def test_handler__output_event__device_action(
+        get_lutron_connection,
+        lutron_output_event,
+        logger,
+        mocker
+):
+    handler = lutron.get_handler({
+        'actions': {
+            'ANY': {
+                'SET_LEVEL': {
+                    '100': {
+                        'BTN_1': 'PRESS',
+                    },
+                    '0': {
+                        'BTN_3': 'PRESS',
+                    }
+                }
+            }
+        },
+        'bridge': 1,
+        'id': 2
+    })
+
+    result = await handler(lutron_output_event)
+
+    assert result is True
+
+    call = logger.debug.call_args[0]
+    command = call[1]
+
+    assert (
+        'LutronCommand('
+        'operation=Operation.DEVICE, '
+        'device=2, '
+        'component=Component.BTN_1, '
+        'action=DeviceAction.PRESS, '
+        'parameters=None, '
+        'bridge=10.0.0.10'
+        ')') == repr(command)
+
+    logger.debug.assert_called_with(
+        'Translated event into Lutron command: %s', command
+    )
+
+
+@pytest.mark.asyncio
+async def test_handler__device_event__unknown_device_action(
+        get_lutron_connection,
+        lutron_device_event,
+        logger,
+        mocker
+):
+    handler = lutron.get_handler({
+        'actions': {
+            'BTN_1': {
+                'PRESS': {
+                    'HOKEY_POKEY': True
+                }
+            }
+        },
+        'bridge': 1,
+        'id': 2
+    })
+
+    with pytest.raises(RuntimeError) as e:
+        await handler(lutron_device_event)
+
+    assert 'Unknown action encountered: HOKEY_POKEY' == str(e.value)
+
+
+@pytest.mark.asyncio
+async def test_handler__output_event__unconfigured_output_action(
+        get_lutron_connection,
+        lutron_output_event,
+        logger,
+        mocker
+):
+    handler = lutron.get_handler({
+        'actions': {
+            'ANY': {
+                'SET_LEVEL': {
+                    '0': {
+                        'BTN_1': 'PRESS',
+                    }
+                }
+            }
+        },
+        'bridge': 1,
+        'id': 2
+    })
+
+    result = await handler(lutron_output_event)
+
+    assert result is False
+
+    logger.warning.assert_called_with(
+        'Action not specified in config: %s:%s',
+        lutron_output_event.action,
+        lutron_output_event.parameters
+    )
+
+
+@pytest.mark.asyncio
+async def test_handler__output_event__unknown_output_action(
+        get_lutron_connection,
+        lutron_output_event,
+        logger,
+        mocker
+):
+    handler = lutron.get_handler({
+        'actions': {
+            'ANY': {
+                'SET_LEVEL': {
+                    'qux': {
+                        'BTN_1': 'PRESS',
+                    }
+                }
+            }
+        },
+        'bridge': 1,
+        'id': 2
+    })
+
+    result = await handler(lutron_output_event)
+
+    assert result is False
+
+    logger.warning.assert_called_with(
+        'Action not specified in config: %s:%s',
+        lutron_output_event.action,
+        lutron_output_event.parameters
+    )
