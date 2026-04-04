@@ -250,6 +250,17 @@ LUTRON_MAPPING: Dict[int, Dict] = {
             }
         }
     },
+    12: {
+        'name': 'Garage Main Lights',
+        'tuya': {
+            'name': 'Workbench Lights',
+            'id': 'ebd9ffdea61cd889f90alo',
+            'key': 'mf7(eG~/=)mU)Pq!',
+            'addr': '192.168.1.147',
+            'version': 3.3,
+            'actions': SMART_SWITCH_OUTPUT_ACTIONS,
+        }
+    },
 }
 
 LUTRON2_MAPPING: Dict[int, Dict] = {
