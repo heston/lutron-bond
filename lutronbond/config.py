@@ -132,7 +132,7 @@ HAYES_CLOUD_LIGHT = {
     'name': 'Hayes Bedroom Cloud Light',
     'id': 'eb0e8441252f2f6d2bppsu',
     'key': '$$/</w7Q+cQ}#Mt1',
-    'addr': '192.168.1.21',
+    'addr': '192.168.1.22',
     'version': 3.3,
 }
 
