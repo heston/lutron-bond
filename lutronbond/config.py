@@ -106,6 +106,7 @@ BOND_IDS = {
     'Master Bedroom': '6409d2a2',
     'Living Room': '0b965995',
     'Guest Room': 'cb22812453dceb35',
+    'Bakery': '439c95ac',
 }
 
 SMART_SWITCH_ACTIONS = {
@@ -258,6 +259,14 @@ LUTRON_MAPPING: Dict[int, Dict] = {
             'key': 'mf7(eG~/=)mU)Pq!',
             'addr': '192.168.1.147',
             'version': 3.3,
+            'actions': SMART_SWITCH_OUTPUT_ACTIONS,
+        }
+    },
+    74: {
+        'name': 'Bakery (Under Stair) Lights',
+        'bond': {
+            'name': 'Bakery Lights',
+            'id': BOND_IDS['Bakery'],
             'actions': SMART_SWITCH_OUTPUT_ACTIONS,
         }
     },
