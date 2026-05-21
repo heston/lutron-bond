@@ -38,18 +38,22 @@ DOUBLE_TAP_WINDOW = float(get_env('LB_DOUBLE_TAP_WINDOW', '0.5'))
 
 ActionCommand = Union[None, str, Dict[str, Any]]
 
+
 class ButtonActions(TypedDict, total=False):
     PRESS: ActionCommand
     RELEASE: ActionCommand
     DBLTAP: ActionCommand
     SET_LEVEL: ActionCommand
 
+
 ActionConfig = Dict[str, ButtonActions]
+
 
 class BondConfig(TypedDict):
     name: str
     id: str
     actions: ActionConfig
+
 
 class TuyaConfig(TypedDict, total=False):
     name: str
@@ -59,11 +63,13 @@ class TuyaConfig(TypedDict, total=False):
     version: float
     actions: ActionConfig
 
+
 class LutronSubConfig(TypedDict):
     name: str
     bridge: int
     id: int
     actions: ActionConfig
+
 
 class LutronDevice(TypedDict, total=False):
     name: str
@@ -71,7 +77,9 @@ class LutronDevice(TypedDict, total=False):
     tuya: Union[TuyaConfig, List[TuyaConfig]]
     lutron: Union[LutronSubConfig, List[LutronSubConfig]]
 
+
 LutronMapping = Dict[int, LutronDevice]
+
 
 FAN_LIGHT_CONFIG: ActionConfig = {
     'BTN_1': {
