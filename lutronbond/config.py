@@ -40,14 +40,23 @@ FAN_LIGHT_CONFIG = {
     'BTN_1': {
         'PRESS': None,
         'RELEASE': 'TurnLightOn',
+        'DBLTAP': {
+            'state': {'light': 1}
+        }
     },
     'BTN_2': {
         'PRESS': None,
         'RELEASE': 'TurnLightOn',
+        'DBLTAP': {
+            'state': {'light': 1}
+        }
     },
     'BTN_3': {
         'PRESS': None,
         'RELEASE': 'TurnLightOff',
+        'DBLTAP': {
+            'state': {'light': 0}
+        }
     },
     'BTN_RAISE': {
         'PRESS': 'StartDimmer',

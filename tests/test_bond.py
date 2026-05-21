@@ -185,6 +185,33 @@ async def test_handler__dict_action(
 
 
 @pytest.mark.asyncio
+async def test_handler__state_belief_action(
+        lutron_event,
+        logger,
+        mock_bond_action,
+        mock_default_bond_connection):
+    handler = bond.get_handler({
+        'actions': {'UNKNOWN': {'UNKNOWN': {'state': {'light': 1}}}},
+        'id': 'bondid',
+    })
+
+    result = await handler(lutron_event)
+
+    mock_bond_action.assert_called_with('state', argument={'light': 1})
+    mock_default_bond_connection.action.assert_called_with(
+        'bondid',
+        mock_bond_action.return_value
+    )
+    logger.info.assert_called_with(
+        '%s for %s request sent to Bond Bridge %s',
+        'state',
+        'Unnamed',
+        'bondid'
+    )
+    assert result is True
+
+
+@pytest.mark.asyncio
 async def test_handler__OUTPUT_action(
         lutron_output_event,
         logger,
