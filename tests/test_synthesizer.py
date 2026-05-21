@@ -2,6 +2,7 @@ from unittest import mock
 
 import pytest
 
+from lutronbond import config
 from lutronbond import lutron
 from lutronbond import synthesizer
 
@@ -77,8 +78,8 @@ def test_second_press_within_window_publishes_dbltap(synth, mock_bus, mock_time)
     # First press at 1000.0
     synth.process(event)
 
-    # Second press at 1000.2 (within 0.4 window)
-    mock_time.return_value = 1000.2
+    # Second press is within double tap window
+    mock_time.return_value = 1000.0 + config.DOUBLE_TAP_WINDOW  - 0.1
     synth.process(event)
 
     key = "10.0.0.10:1:BTN_1"
@@ -103,13 +104,13 @@ def test_second_press_outside_window_updates_timestamp(synth, mock_bus, mock_tim
     # First press at 1000.0
     synth.process(event)
 
-    # Second press at 1000.5 (outside 0.4 window)
-    mock_time.return_value = 1000.5
+    # Second press is outside double tap window
+    mock_time.return_value = 1000.0 + config.DOUBLE_TAP_WINDOW + 0.1
     synth.process(event)
 
     key = "10.0.0.10:1:BTN_1"
     # Should update timestamp
-    assert synth.last_press_times[key] == 1000.5
+    assert synth.last_press_times[key] == 1000.0 + config.DOUBLE_TAP_WINDOW + 0.1
 
     # Should NOT publish DBLTAP
     mock_bus.pub.assert_not_called()
