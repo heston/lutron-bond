@@ -79,7 +79,7 @@ def test_second_press_within_window_publishes_dbltap(synth, mock_bus, mock_time)
     synth.process(event)
 
     # Second press is within double tap window
-    mock_time.return_value = 1000.0 + config.DOUBLE_TAP_WINDOW  - 0.1
+    mock_time.return_value = 1000.0 + config.DOUBLE_TAP_WINDOW - 0.1
     synth.process(event)
 
     key = "10.0.0.10:1:BTN_1"
