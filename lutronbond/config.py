@@ -1,5 +1,5 @@
 import os
-from typing import Dict
+from typing import Any, Dict, List, TypedDict, Union, cast
 
 
 def get_env(name: str, default: str = '') -> str:
@@ -36,7 +36,44 @@ TUYA_CONNECTION_TIMEOUT = int(get_env('LB_TUYA_CONNECTION_TIMEOUT', '3'), 10)
 
 DOUBLE_TAP_WINDOW = float(get_env('LB_DOUBLE_TAP_WINDOW', '0.5'))
 
-FAN_LIGHT_CONFIG = {
+ActionCommand = Union[None, str, Dict[str, Any]]
+
+class ButtonActions(TypedDict, total=False):
+    PRESS: ActionCommand
+    RELEASE: ActionCommand
+    DBLTAP: ActionCommand
+    SET_LEVEL: ActionCommand
+
+ActionConfig = Dict[str, ButtonActions]
+
+class BondConfig(TypedDict):
+    name: str
+    id: str
+    actions: ActionConfig
+
+class TuyaConfig(TypedDict, total=False):
+    name: str
+    id: str
+    key: str
+    addr: str
+    version: float
+    actions: ActionConfig
+
+class LutronSubConfig(TypedDict):
+    name: str
+    bridge: int
+    id: int
+    actions: ActionConfig
+
+class LutronDevice(TypedDict, total=False):
+    name: str
+    bond: Union[BondConfig, List[BondConfig]]
+    tuya: Union[TuyaConfig, List[TuyaConfig]]
+    lutron: Union[LutronSubConfig, List[LutronSubConfig]]
+
+LutronMapping = Dict[int, LutronDevice]
+
+FAN_LIGHT_CONFIG: ActionConfig = {
     'BTN_1': {
         'PRESS': None,
         'RELEASE': 'TurnLightOn',
@@ -84,7 +121,7 @@ FAN_LIGHT_CONFIG = {
     },
 }
 
-FAN_CONFIG = {
+FAN_CONFIG: ActionConfig = {
     'BTN_1': {
         'PRESS': None,
         'RELEASE': {
@@ -113,14 +150,14 @@ FAN_CONFIG = {
     }
 }
 
-BOND_IDS = {
+BOND_IDS: Dict[str, str] = {
     'Master Bedroom': '6409d2a2',
     'Living Room': '0b965995',
     'Guest Room': 'cb22812453dceb35',
     'Bakery': '439c95ac',
 }
 
-SMART_SWITCH_ACTIONS = {
+SMART_SWITCH_ACTIONS: ActionConfig = {
     'BTN_1': {
         'PRESS': None,
         'RELEASE': 'TurnOn',
@@ -131,7 +168,7 @@ SMART_SWITCH_ACTIONS = {
     },
 }
 
-SMART_SWITCH_OUTPUT_ACTIONS = {
+SMART_SWITCH_OUTPUT_ACTIONS: ActionConfig = {
     'ANY': {
         'SET_LEVEL': {
             '100.00': 'TurnOn',
@@ -140,7 +177,7 @@ SMART_SWITCH_OUTPUT_ACTIONS = {
     }
 }
 
-HAYES_CLOUD_LIGHT = {
+HAYES_CLOUD_LIGHT: TuyaConfig = {
     'name': 'Hayes Bedroom Cloud Light',
     'id': 'eb0e8441252f2f6d2bppsu',
     'key': '$$/</w7Q+cQ}#Mt1',
@@ -148,7 +185,7 @@ HAYES_CLOUD_LIGHT = {
     'version': 3.3,
 }
 
-LUTRON_MAPPING: Dict[int, Dict] = {
+LUTRON_MAPPING: LutronMapping = {
     # Lutron Integration ID->Bond/Tuya Device
     21: {
         'name': 'Master Bedroom Fan Light Pico',
@@ -227,11 +264,11 @@ LUTRON_MAPPING: Dict[int, Dict] = {
     # },
     50: {
         'name': 'Hayes Bedroom Light Switch',
-        'tuya': dict(HAYES_CLOUD_LIGHT, actions=SMART_SWITCH_OUTPUT_ACTIONS)
+        'tuya': cast(TuyaConfig, dict(HAYES_CLOUD_LIGHT, actions=SMART_SWITCH_OUTPUT_ACTIONS))
     },
     60: {
         'name': 'Hayes Cloud Light Pico',
-        'tuya': dict(HAYES_CLOUD_LIGHT, actions=SMART_SWITCH_ACTIONS),
+        'tuya': cast(TuyaConfig, dict(HAYES_CLOUD_LIGHT, actions=SMART_SWITCH_ACTIONS)),
         'lutron': {
             'name': 'Hayes Bedroom Main Lights',
             'bridge': 1,
@@ -283,7 +320,7 @@ LUTRON_MAPPING: Dict[int, Dict] = {
     },
 }
 
-LUTRON2_MAPPING: Dict[int, Dict] = {
+LUTRON2_MAPPING: LutronMapping = {
     60: {
         'name': 'Office Video Light Pico',
         'tuya': [
