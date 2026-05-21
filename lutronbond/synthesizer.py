@@ -22,7 +22,7 @@ class EventSynthesizer:
             if now - last_press <= config.DOUBLE_TAP_WINDOW:
                 logger.debug("Synthesizing DBLTAP for %s", key)
                 self.last_press_times[key] = 0.0
-                
+
                 synthesized_event = lutron.LutronEvent(
                     operation=event.operation,
                     device=event.device,
@@ -31,7 +31,7 @@ class EventSynthesizer:
                     parameters=event.parameters,
                     bridge=event.bridge
                 )
-                
+
                 eventbus_key = f"{event.bridge}:{event.device}"
                 eventbus.get_bus().pub(eventbus_key, synthesized_event)
             else:
