@@ -8,6 +8,7 @@ from . import config
 from . import eventbus
 from . import lutron
 from . import tuya
+from . import synthesizer
 
 
 EVENT_OPERATION: list[lutron.Operation] = [
@@ -29,6 +30,8 @@ def handler(lutron_event: lutron.LutronEvent) -> None:
         '{}:{}'.format(lutron_event.bridge, lutron_event.device),
         lutron_event
     )
+
+    synthesizer.get_synthesizer().process(lutron_event)
 
 
 def add_listeners_for_bridge(bridge_addr: str, config_map: typing.Dict) -> None:
