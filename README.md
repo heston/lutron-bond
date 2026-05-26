@@ -88,11 +88,19 @@ LUTRON_MAPPING = {
             'actions': {
                 'BTN_1': {
                     'PRESS': 'TurnLightOn',  # Bond action
-                    'RELEASE': None,  # No-op. Technically optional.
+                    'RELEASE': None,  # Technically optional, but shown here for completeness.
+                    'DBLTAP': {  # Double-tap action
+                        # Instead of an action string, you can provide a state dictionary.
+                        # This will update the Bond Bridge's tracked state for this device.
+                        'state': {'light': 0}
+                    }
                 },
                 'BTN_3': {
                     'PRESS': 'TurnLightOff',
                     'RELEASE': None,
+                    'DBLTAP': {
+                        'state': {'light': 1}
+                    }
                 },
             }
         }
@@ -101,8 +109,16 @@ LUTRON_MAPPING = {
 
 ```
 
+In addition to `PRESS` and `RELEASE`, a `DBLTAP` action is also supported for buttons.
+
+You can also use an action to update the Bond Bridge's tracked state for a device instead of
+sending a command, which is useful for keeping the bridge in sync when a device's state is
+changed out-of-band. To do this, specify a `state` dictionary rather than an action string
+(e.g., `{'state': {'light': 1}}`).
+
 To see all the Bond actions available, take a look at the
 [Action class here](https://github.com/bondhome/bond-async/blob/master/bond_async/action.py#L14).
+
 The [Bond API docs](http://docs-local.appbond.com/) may also be helpful for
 determining how to control specific devices. Not all devices support all
 actions, so some trial-and-error may be needed.
@@ -382,12 +398,18 @@ before timing out. Default value is 3.
 ### Other Settings
 
 ```bash
-LB_LOG_LEVEL="INFO"
+LB_DOUBLE_TAP_WINDOW=10.0
+```
+Use this to set the time interval between button presses that should be considered
+a double-tap. In other words, pressing the same button twice within this window
+will trigger a `DBLTAP` action on that button. The default is intentionally long.
+
+```bash
+LB_LOG_LEVEL=INFO
 ```
 You can change the log level to see more (or less) output from the program.
 The following values are supported (from most to least verbose): `DEBUG`,
 `INFO`, `WARNING`, `ERROR`. Default value is `INFO`.
-
 
 # Development & Testing
 
