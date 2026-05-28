@@ -34,6 +34,13 @@ LOG_LEVEL = get_env('LB_LOG_LEVEL', 'INFO')
 TUYA_RETRY_COUNT = int(get_env('LB_TUYA_RETRY_COUNT', '3'), 10)
 TUYA_CONNECTION_TIMEOUT = int(get_env('LB_TUYA_CONNECTION_TIMEOUT', '3'), 10)
 
+try:
+    HUE_BRIDGE_ADDR = get_env('LB_HUE_BRIDGE_ADDR')
+    HUE_APP_KEY = get_env('LB_HUE_APP_KEY')
+except ValueError:
+    HUE_BRIDGE_ADDR = ''
+    HUE_APP_KEY = ''
+
 DOUBLE_TAP_WINDOW = float(get_env('LB_DOUBLE_TAP_WINDOW', '10.0'))
 
 ActionCommand = Union[None, str, Dict[str, Any]]
@@ -64,6 +71,12 @@ class TuyaConfig(TypedDict, total=False):
     actions: ActionConfig
 
 
+class HueConfig(TypedDict, total=False):
+    name: str
+    id: str
+    actions: ActionConfig
+
+
 class LutronSubConfig(TypedDict):
     name: str
     bridge: int
@@ -75,6 +88,7 @@ class LutronDevice(TypedDict, total=False):
     name: str
     bond: Union[BondConfig, List[BondConfig]]
     tuya: Union[TuyaConfig, List[TuyaConfig]]
+    hue: Union[HueConfig, List[HueConfig]]
     lutron: Union[LutronSubConfig, List[LutronSubConfig]]
 
 
