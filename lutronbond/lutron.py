@@ -172,6 +172,14 @@ class LutronEvent:
             )
         )
 
+    @property
+    def is_output_event(self) -> bool:
+        return (
+            self.operation is Operation.OUTPUT and
+            self.component is Component.ANY and
+            self.action is OutputAction.SET_LEVEL
+        )
+
 
 class LutronCommand(LutronEvent):
     PREFIX = '#'
