@@ -34,6 +34,13 @@ LOG_LEVEL = get_env('LB_LOG_LEVEL', 'INFO')
 TUYA_RETRY_COUNT = int(get_env('LB_TUYA_RETRY_COUNT', '3'), 10)
 TUYA_CONNECTION_TIMEOUT = int(get_env('LB_TUYA_CONNECTION_TIMEOUT', '3'), 10)
 
+try:
+    HUE_BRIDGE_ADDR = get_env('LB_HUE_BRIDGE_ADDR')
+    HUE_APP_KEY = get_env('LB_HUE_APP_KEY')
+except ValueError:
+    HUE_BRIDGE_ADDR = ''
+    HUE_APP_KEY = ''
+
 DOUBLE_TAP_WINDOW = float(get_env('LB_DOUBLE_TAP_WINDOW', '10.0'))
 
 ActionCommand = Union[None, str, Dict[str, Any]]
@@ -64,6 +71,12 @@ class TuyaConfig(TypedDict, total=False):
     actions: ActionConfig
 
 
+class HueConfig(TypedDict, total=False):
+    name: str
+    id: str
+    actions: ActionConfig
+
+
 class LutronSubConfig(TypedDict):
     name: str
     bridge: int
@@ -75,6 +88,7 @@ class LutronDevice(TypedDict, total=False):
     name: str
     bond: Union[BondConfig, List[BondConfig]]
     tuya: Union[TuyaConfig, List[TuyaConfig]]
+    hue: Union[HueConfig, List[HueConfig]]
     lutron: Union[LutronSubConfig, List[LutronSubConfig]]
 
 
@@ -326,6 +340,21 @@ LUTRON_MAPPING: LutronMapping = {
             'actions': SMART_SWITCH_OUTPUT_ACTIONS,
         }
     },
+    65: {
+        'name': 'Office Accent Lights',
+        'hue': {
+            'name': 'Office Hue Light Strip',
+            'id': '4065df44-9025-4348-8d2a-94599813d303',
+            'actions': {
+                'ANY': {
+                    'SET_LEVEL': {
+                        '100.00': 'turn_on',
+                        '0.00': 'turn_off',
+                    },
+                },
+            },
+        },
+    },
 }
 
 LUTRON2_MAPPING: LutronMapping = {
@@ -349,5 +378,19 @@ LUTRON2_MAPPING: LutronMapping = {
                 'actions': SMART_SWITCH_ACTIONS,
             },
         ],
+        'hue': {
+            'name': 'Office Hue Light Strip',
+            'id': '4065df44-9025-4348-8d2a-94599813d303',
+            'actions': {
+                'BTN_1': {
+                    'PRESS': None,
+                    'RELEASE': 'turn_on'
+                },
+                'BTN_3': {
+                    'PRESS': None,
+                    'RELEASE': 'turn_off'
+                }
+            },
+        }
     },
 }

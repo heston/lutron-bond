@@ -4,7 +4,7 @@
 [![flake8](https://github.com/heston/lutron-bond/actions/workflows/flake8.yml/badge.svg)](https://github.com/heston/lutron-bond/actions/workflows/flake8.yml)
 [![mypy](https://github.com/heston/lutron-bond/actions/workflows/mypy.yml/badge.svg)](https://github.com/heston/lutron-bond/actions/workflows/mypy.yml)
 
-Connector between Lutron Caseta SmartBridge Pro and Bond Bridge and/or Tuya Devices.
+Connector between Lutron Caseta SmartBridge Pro and Bond Bridge, Tuya Devices, and/or Philips Hue Bridges.
 
 # Requirements
 
@@ -15,6 +15,7 @@ Connector between Lutron Caseta SmartBridge Pro and Bond Bridge and/or Tuya Devi
 _Optional_
 
 * [TuyaCloud](https://www.tuya.com/) device (like a smart outlet or lightbulb). Tuya is a white-label manufacturer, and their devices are sold under many names. Tuya devices work with the *Smart Life* app.
+* [Philips Hue](https://www.philips-hue.com/) Bridge (V2) to control Philips Hue lights.
 
 
 # Usage
@@ -47,6 +48,8 @@ pip install -r requirements.txt
 export LB_LUTRON_BRIDGE_ADDR="<IP address of Lutron bridge>"
 export LB_BOND_BRIDGE_ADDR="<IP address of Bond Bridge>"
 export LB_BOND_BRIDGE_API_TOKEN="<Bond Bridge API token>"
+export LB_HUE_BRIDGE_ADDR="<IP address of Hue Bridge>"
+export LB_HUE_APP_KEY="<Hue App Key>"
 ./run.sh
 ```
 
@@ -58,6 +61,8 @@ named `.env` in the same directory as `run.sh`. For example:
 export LB_LUTRON_BRIDGE_ADDR="<IP address of Lutron bridge>"
 export LB_BOND_BRIDGE_ADDR="<IP address of Bond Bridge>"
 export LB_BOND_BRIDGE_API_TOKEN="<Bond Bridge API token>"
+export LB_HUE_BRIDGE_ADDR="<IP address of Hue Bridge>"
+export LB_HUE_APP_KEY="<Hue App Key>"
 ```
 
 `run.sh` will look for this file and load it for you.
@@ -69,7 +74,7 @@ Each home's configuration will be different. Look at
 [config.py](blob/main/lutronbond/config.py) for comprehensive examples.
 
 Any event from any Lutron switch or remote can be configured (in addition to
-its normal function) to control a Bond, Tuya, and/or other Lutron
+its normal function) to control a Bond, Tuya, Hue, and/or other Lutron
 device.
 
 Further down in this file it describes how to find the various IDs and metadata
@@ -178,6 +183,34 @@ LUTRON_MAPPING = {
 
 ```
 
+**To trigger a Hue action:**
+
+```python
+LUTRON_MAPPING = {
+    21: {  # <-- This number is the Lutron Integration ID
+        'name': 'Living Room Hue Pico',  # Optional, but helps readability
+        'hue': {
+            'id': '<light_or_group_id>',  # The ID of the Hue light or group
+            'actions': {
+                'BTN_1': {
+                    'PRESS': 'turn_on',  # Hue method name
+                    'RELEASE': None,
+                },
+                'BTN_3': {
+                    'PRESS': 'turn_off',
+                    'RELEASE': None,
+                },
+                'BTN_RAISE': {
+                    # You can also pass a full state dictionary to 'set_state'
+                    'PRESS': {'set_state': {'on': True, 'brightness': 100}},
+                }
+            }
+        }
+    }
+}
+
+```
+
 **To trigger a Lutron action:**
 
 ```python
@@ -241,13 +274,13 @@ LUTRON_MAPPING = {
 
 ```
 
-Tuya, Bond, and Lutron actions may be configured on the same Integration ID.
+Tuya, Bond, Hue, and Lutron actions may be configured on the same Integration ID.
 This means that the same button on a Pico remote can trigger actions across many
 devices at the same time. Actions are all run concurrently, to minimize delays.
 
-In addition, the `tuya`, `bond`, and `lutron` keys in the config also accept a
+In addition, the `tuya`, `bond`, `hue`, and `lutron` keys in the config also accept a
 list of actions. This allows a single Lutron event to control any number of
-Bond, Tuya, and Lutron devices simultaneously.
+Bond, Tuya, Hue, and Lutron devices simultaneously.
 
 ```python
 LUTRON_MAPPING = {
@@ -270,6 +303,16 @@ LUTRON_MAPPING = {
             },
             {
                 'name': 'Bond Device 2',
+                # ...
+            }
+        ],
+        'hue': [
+            {
+                'name': 'Hue Device 1',
+                # ...
+            },
+            {
+                'name': 'Hue Device 2',
                 # ...
             }
         ],

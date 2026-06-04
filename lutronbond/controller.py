@@ -8,6 +8,7 @@ from . import config
 from . import eventbus
 from . import lutron
 from . import tuya
+from . import hue
 from . import synthesizer
 
 
@@ -34,7 +35,7 @@ def handler(lutron_event: lutron.LutronEvent) -> None:
     synthesizer.get_synthesizer().process(lutron_event)
 
 
-def add_listeners_for_bridge(bridge_addr: str, config_map: typing.Dict) -> None:
+def add_listeners_for_bridge(bridge_addr: str, config_map: typing.Dict) -> None:  # noqa: C901
     for lutron_id, subconfig in config_map.items():
         logger.debug(
             'Subscribing to %s:%s -> %s',
@@ -56,6 +57,13 @@ def add_listeners_for_bridge(bridge_addr: str, config_map: typing.Dict) -> None:
                     eventbus.get_bus().sub(key, tuya.get_handler(config_item))
             else:
                 eventbus.get_bus().sub(key, tuya.get_handler(subconfig['tuya']))
+
+        if 'hue' in subconfig:
+            if type(subconfig['hue']) is list:
+                for config_item in subconfig['hue']:
+                    eventbus.get_bus().sub(key, hue.get_handler(config_item))
+            else:
+                eventbus.get_bus().sub(key, hue.get_handler(subconfig['hue']))
 
         if 'lutron' in subconfig:
             if type(subconfig['lutron']) is list:
@@ -83,6 +91,7 @@ async def shutdown() -> None:
     shutting_down = True
     for c in lutron.connections:
         await c.close()
+    await hue.shutdown()
     logger.info('Exiting...')
 
 
@@ -96,6 +105,8 @@ async def start() -> None:
 
     await bond.verify_connection()
     cancel_bond_keepalive = bond.keepalive()
+
+    await hue.setup()
 
     add_listeners()
 

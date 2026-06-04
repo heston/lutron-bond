@@ -29,6 +29,11 @@ def tuya_get_handler(mocker):
 
 
 @pytest.fixture
+def hue_get_handler(mocker):
+    return mocker.patch('lutronbond.hue.get_handler')
+
+
+@pytest.fixture
 def lutron_get_handler(mocker):
     return mocker.patch('lutronbond.lutron.get_handler')
 
@@ -273,6 +278,40 @@ def test__add_tuya_listener(
     bus.sub.assert_called_with('{}:{}'.format(env_config.LUTRON_BRIDGE_ADDR, 99), handler)
 
 
+def test__add_hue_listener(
+        mocker, logger, bus, hue_get_handler, tuya_get_handler, bond_get_handler, import_config):
+    env_config = import_config()
+    config = {
+        99: {
+            'hue': {
+                'id': 'asdf',
+                'actions': {
+                    'BTN_1': {
+                        'PRESS': 'turn_on',
+                        'RELEASE': None,
+                    }
+                }
+            }
+        }
+    }
+    subconfig = config[99]
+    mocker.patch('lutronbond.config.LUTRON_MAPPING', config)
+    mocker.patch('lutronbond.config.LUTRON2_MAPPING', {})
+    handler = mocker.Mock()
+    hue_get_handler.return_value = handler
+
+    controller.add_listeners()
+
+    logger.debug.assert_called_with(
+        'Subscribing to %s:%s -> %s',
+        env_config.LUTRON_BRIDGE_ADDR, 99, subconfig
+    )
+    hue_get_handler.assert_called_with(subconfig['hue'])
+    assert not bond_get_handler.called
+    assert not tuya_get_handler.called
+    bus.sub.assert_called_with('{}:{}'.format(env_config.LUTRON_BRIDGE_ADDR, 99), handler)
+
+
 def test__add_tuya_listener_list(
         mocker, logger, bus, tuya_get_handler, bond_get_handler, import_config):
     env_config = import_config()
@@ -490,6 +529,7 @@ async def test__shutdown(mocker, amock, logger):
         'lutronbond.lutron.LutronConnection'
     )
     get_connection.return_value.close = amock()
+    hue_shutdown = mocker.patch('lutronbond.hue.shutdown', amock())
 
     lutron.get_lutron_connection('a')
     lutron.get_lutron_connection('b')
@@ -501,6 +541,7 @@ async def test__shutdown(mocker, amock, logger):
     assert controller.shutting_down is True
     assert len(lutron.connections) == 2
     assert all(c.close.called for c in lutron.connections)
+    assert hue_shutdown.called
     logger.info.assert_called_with('Exiting...')
 
     controller.shutting_down = False
@@ -514,6 +555,7 @@ async def test__start(mocker, logger, amock):
         amock()
     )
     keepalive = mocker.patch('lutronbond.bond.keepalive')
+    hue_setup = mocker.patch('lutronbond.hue.setup', amock())
     mocker.patch('lutronbond.controller.add_listeners')
     lutron_connection = mocker.patch(
         'lutronbond.lutron.LutronConnection'
@@ -532,6 +574,7 @@ async def test__start(mocker, logger, amock):
     loop.add_signal_handler.assert_called_with(signal.SIGINT, mocker.ANY)
     assert verify_connection.called
     assert keepalive.called
+    assert hue_setup.called
     assert lutron_connection.open.called
     lutron_connection.stream.assert_called_with(controller.handler)
 
@@ -546,6 +589,7 @@ async def test__start__cannot_open(mocker, logger, amock):
         amock()
     )
     keepalive = mocker.patch('lutronbond.bond.keepalive')
+    mocker.patch('lutronbond.hue.setup', amock())
     mocker.patch('lutronbond.controller.add_listeners')
     lutron_connection = mocker.patch(
         'lutronbond.lutron.LutronConnection'
@@ -569,6 +613,7 @@ async def test__start__read_error(mocker, logger, amock):
         amock()
     )
     mocker.patch('lutronbond.bond.keepalive')
+    mocker.patch('lutronbond.hue.setup', amock())
     mocker.patch('lutronbond.controller.add_listeners')
     lutron_connection = mocker.patch(
         'lutronbond.lutron.LutronConnection'
