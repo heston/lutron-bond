@@ -1,3 +1,4 @@
+import asyncio
 import functools
 import logging
 import typing
@@ -19,7 +20,7 @@ def get_bridge() -> HueBridgeV2:
 async def setup() -> None:
     bridge = get_bridge()
     await bridge.initialize()
-    logger.info("Connected to Hue Bridge at %s", config.HUE_BRIDGE_ADDR)
+    logger.info("Connected to Hue Bridge %s at %s", bridge.bridge_id, config.HUE_BRIDGE_ADDR)
 
 
 async def shutdown() -> None:
@@ -106,3 +107,34 @@ def get_handler(  # noqa: C901
             return False
 
     return handler
+
+
+async def main() -> None:
+    logging.basicConfig(
+        level=config.LOG_LEVEL
+    )
+
+    if not config.HUE_BRIDGE_ADDR:
+        logger.error("No bridge configured")
+        return
+
+    bridge = HueBridgeV2(config.HUE_BRIDGE_ADDR, config.HUE_APP_KEY)
+    await bridge.initialize()
+
+    logger.info("Connected to bridge: %s at address %s", bridge.bridge_id, config.HUE_BRIDGE_ADDR)
+    logger.info("Found devices:")
+    
+    try:
+        for item in bridge.devices:
+            logger.info("Device: name=%s id=%s", item.metadata.name, item.id)
+    
+        for light in bridge.lights.items:
+            logger.info("Light: id=%s metadata=%s", light.id, getattr(light, 'metadata', None))
+    except Exception as e:
+        logger.exception("Error: %s", e)
+
+    await bridge.close()
+
+
+if __name__ == '__main__':
+    asyncio.run(main())
