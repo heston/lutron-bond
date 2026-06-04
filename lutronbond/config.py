@@ -340,6 +340,21 @@ LUTRON_MAPPING: LutronMapping = {
             'actions': SMART_SWITCH_OUTPUT_ACTIONS,
         }
     },
+    65: {
+        'name': 'Office Accent Lights',
+        'hue': {
+            'name': 'Office Hue Light Strip',
+            'id': '4065df44-9025-4348-8d2a-94599813d303',
+            'actions': {
+                'ANY': {
+                    'SET_LEVEL': {
+                        '100.00': 'turn_on',
+                        '0.00': 'turn_off',
+                    },
+                },
+            },
+        },
+    },
 }
 
 LUTRON2_MAPPING: LutronMapping = {
