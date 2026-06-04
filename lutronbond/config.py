@@ -363,5 +363,19 @@ LUTRON2_MAPPING: LutronMapping = {
                 'actions': SMART_SWITCH_ACTIONS,
             },
         ],
+        'hue': {
+            'name': 'Office Hue Light Strip',
+            'id': '4065df44-9025-4348-8d2a-94599813d303',
+            'actions': {
+                'BTN_1': {
+                    'PRESS': None,
+                    'RELEASE': 'turn_on'
+                },
+                'BTN_3': {
+                    'PRESS': None,
+                    'RELEASE': 'turn_off'
+                }
+            },
+        }
     },
 }
