@@ -326,6 +326,26 @@ LUTRON_MAPPING: LutronMapping = {
             'actions': SMART_SWITCH_OUTPUT_ACTIONS,
         }
     },
+    44: {
+        'name': 'Ada Main Lights',
+        'lutron': {
+            'name': 'Ada Nightstand Lights',
+            'bridge': 1,
+            'id': 57,
+            'actions': {
+                'ANY': {
+                    'SET_LEVEL': {
+                        '0.00': '0,0.5',
+                        '100.00': '100,0.5',
+                        # In English:
+                        #   when integration ID 44's output level is set to 0 or 100,
+                        #   set the output level of integration ID 57 to 0 or 100,
+                        #   respectively, with a transition duration of half a second.
+                    }
+                }
+            }
+        }
+    },
 }
 
 LUTRON2_MAPPING: LutronMapping = {
