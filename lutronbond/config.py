@@ -335,8 +335,12 @@ LUTRON_MAPPING: LutronMapping = {
             'actions': {
                 'ANY': {
                     'SET_LEVEL': {
-                        '0.00': '0,0.5',
-                        '100.00': '100,0.5',
+                        '0.00': {
+                            'SET_LEVEL': '0,0.5'
+                        },
+                        '100.00': {
+                            'SET_LEVEL': '100,0.5'
+                        },
                         # In English:
                         #   when integration ID 44's output level is set to 0 or 100,
                         #   set the output level of integration ID 57 to 0 or 100,
